@@ -1,206 +1,210 @@
 /**
  * Dialogue Participant Implementation
- *
- * Implements a specialized participant for handling conversations in a convening.
+ * Core participant class for multi-agent dialogues
  */
 
-import { IParticipant } from "../interfaces.ts";
-import { createStringUtils, IStringUtils } from "../../utils/mod.ts";
+import { IAgent, IAgentConfig } from "../../utils/interfaces.ts";
+import { 
+  IBiddingStrategy,
+  BiddingStrategyFactory,
+  Bid,
+  BidContext
+} from "./bidding/mod.ts";
+import { DialogueState } from "../workflows/dialogue_workflow.ts";
 
 /**
- * Supported dialogue styles
- */
-export type DialogueStyle = "casual" | "formal" | "technical";
-
-/**
- * Configuration for dialogue participants
+ * Configuration for a dialogue participant
  */
 export interface DialogueParticipantConfig {
-  id: string;
-  style: DialogueStyle;
-  maxResponseLength?: number;
-  templates?: {
-    greeting?: string;
-    farewell?: string;
-    error?: string;
-  };
+  /**
+   * Unique identifier for the participant
+   * If not provided, a random UUID will be generated
+   */
+  id?: string;
+  
+  /**
+   * Display name for the participant
+   */
+  name: string;
+  
+  /**
+   * Agent configuration for the participant
+   */
+  agentConfig: IAgentConfig;
+  
+  /**
+   * Role of the participant in dialogues
+   */
+  role?: string;
+  
+  /**
+   * Dialogue style for the participant
+   */
+  dialogueStyle?: "cooperative" | "competitive" | "inquisitive" | "assertive" | "analytical";
+  
+  /**
+   * Bidding strategy for the participant
+   * If not provided, a default strategy will be used
+   */
+  biddingStrategy?: IBiddingStrategy;
+  
+  /**
+   * Motivations for the participant
+   * Key-value pairs of motivation types and their strengths (0.0 to 1.0)
+   */
+  motivations?: Record<string, number>;
 }
 
 /**
- * Default templates for different dialogue styles
+ * Core dialogue participant class
  */
-const DEFAULT_TEMPLATES = {
-  casual: {
-    greeting: "Hey there! How can I help you today?",
-    farewell: "Bye! Talk to you later!",
-    error: "Oops, something went wrong. Let's try again.",
-  },
-  formal: {
-    greeting: "Good day. How may I assist you?",
-    farewell: "Thank you for your time. Goodbye.",
-    error: "I apologize, but an error has occurred. Please try again.",
-  },
-  technical: {
-    greeting: "System online. Ready for input.",
-    farewell: "Session terminated. Logging off.",
-    error: "Error detected in processing. Retry recommended.",
-  },
-};
-
-/**
- * A participant specialized for dialogue interactions
- */
-export class DialogueParticipant implements IParticipant {
-  id: string;
-  private style: DialogueStyle;
-  private maxResponseLength: number;
-  private templates: {
-    greeting: string;
-    farewell: string;
-    error: string;
-  };
-  private stringUtils: IStringUtils;
-
+export class DialogueParticipant {
+  /**
+   * Unique identifier for the participant
+   */
+  readonly id: string;
+  
+  /**
+   * Display name for the participant
+   */
+  readonly name: string;
+  
+  /**
+   * Agent that powers this participant
+   */
+  readonly agent: IAgent;
+  
+  /**
+   * Role of the participant in dialogues
+   */
+  readonly role?: string;
+  
+  /**
+   * Dialogue style for the participant
+   */
+  readonly dialogueStyle?: string;
+  
+  /**
+   * Bidding strategy for the participant
+   */
+  protected biddingStrategy: IBiddingStrategy;
+  
+  /**
+   * Motivations for the participant
+   */
+  protected motivations: Record<string, number>;
+  
   /**
    * Create a new dialogue participant
-   *
-   * @param config - Participant configuration
-   * @param stringUtils - String utilities implementation (can be injected for testing)
+   * 
+   * @param config - Configuration for the participant
+   * @param agent - Agent implementation (if not provided, will be created from config.agentConfig)
    */
   constructor(
     config: DialogueParticipantConfig,
-    stringUtils: IStringUtils = createStringUtils(),
+    agent?: IAgent
   ) {
-    this.id = config.id;
-    this.style = config.style || "casual";
-    this.maxResponseLength = config.maxResponseLength || 500;
-    this.stringUtils = stringUtils;
-
-    // Use provided templates or defaults based on style
-    const defaultTemplates = DEFAULT_TEMPLATES[this.style];
-    this.templates = {
-      greeting: config.templates?.greeting || defaultTemplates.greeting,
-      farewell: config.templates?.farewell || defaultTemplates.farewell,
-      error: config.templates?.error || defaultTemplates.error,
-    };
+    this.id = config.id ?? crypto.randomUUID();
+    this.name = config.name;
+    this.role = config.role;
+    this.dialogueStyle = config.dialogueStyle;
+    this.motivations = config.motivations ?? {};
+    
+    // Set up agent
+    if (agent) {
+      this.agent = agent;
+    } else if (config.agentConfig) {
+      // In a real implementation, this would create the agent from the config
+      // For now, we'll create a simple placeholder agent
+      this.agent = {
+        id: this.id,
+        execute: async (input: string) => `${this.name} responds to: ${input}`,
+      };
+    } else {
+      throw new Error("Either agent or agentConfig must be provided");
+    }
+    
+    // Set up bidding strategy
+    this.biddingStrategy = config.biddingStrategy ?? 
+      BiddingStrategyFactory.createDefaultStrategy();
   }
-
+  
   /**
-   * Execute a dialogue turn with another participant
-   * @param input The input message
+   * Calculate a bid for the participant's turn
+   * 
+   * @param dialogueState - Current state of the dialogue
+   * @returns The calculated bid
+   */
+  async calculateBid(dialogueState: DialogueState): Promise<Bid> {
+    const context: BidContext = {
+      dialogueState,
+      participantId: this.id,
+      context: {
+        motivations: this.motivations,
+        dialogueStyle: this.dialogueStyle,
+        role: this.role,
+      },
+    };
+    
+    return this.biddingStrategy.calculateBid(context);
+  }
+  
+  /**
+   * Generate a response for the participant's turn
+   * 
+   * @param prompt - Prompt for the participant
    * @returns The participant's response
    */
-  async execute(input: string): Promise<string> {
-    try {
-      // For a real implementation, this would call an LLM or other AI service
-      // For this example, we'll use a simple response generation logic
-
-      // Check for special commands
-      if (
-        input.toLowerCase().includes("hello") ||
-        input.toLowerCase().includes("hi")
-      ) {
-        return this.templates.greeting;
-      }
-
-      if (
-        input.toLowerCase().includes("bye") ||
-        input.toLowerCase().includes("goodbye")
-      ) {
-        return this.templates.farewell;
-      }
-
-      // Generate a mock response based on the input
-      const response = this.generateResponse(input);
-
-      // Truncate if needed
-      return this.stringUtils.truncateString(response, this.maxResponseLength);
-    } catch (error) {
-      // Return error message if something goes wrong
-      return this.templates.error;
+  async generateResponse(prompt: string): Promise<string> {
+    return this.agent.execute(prompt);
+  }
+  
+  /**
+   * Update the participant's motivations
+   * 
+   * @param motivations - New or updated motivations
+   */
+  updateMotivations(motivations: Record<string, number>): void {
+    for (const [motivation, strength] of Object.entries(motivations)) {
+      this.motivations[motivation] = Math.max(0, Math.min(1, strength));
     }
   }
-
+  
   /**
-   * Generate a response based on the input and participant's style
-   * @param input User input
-   * @returns Generated response
-   * @throws Error if formatString fails
+   * Get the participant's current motivations
+   * 
+   * @returns Current motivations
    */
-  protected generateResponse(input: string): string {
-    // Extract the topic first to avoid duplicating this call
-    const topic = this.extractTopic(input);
-
-    // In a real implementation, this would call an AI model
-    // For this demo, we'll just generate a simple response based on style
-    switch (this.style) {
-      case "casual":
-        return this.stringUtils.formatString(
-          "I see you're talking about {topic}. That's cool! Tell me more about it.",
-          {
-            topic: topic,
-          },
-        );
-
-      case "formal":
-        return this.stringUtils.formatString(
-          "I understand you are interested in {topic}. I would be pleased to provide more information on this subject.",
-          {
-            topic: topic,
-          },
-        );
-
-      case "technical":
-        return this.stringUtils.formatString(
-          "Input recognized: {topic}. Processing request. Additional data required for complete analysis.",
-          {
-            topic: topic,
-          },
-        );
-
-      default:
-        return "I received your message and am processing it.";
-    }
+  getMotivations(): Record<string, number> {
+    return { ...this.motivations };
   }
-
+  
   /**
-   * Extract the main topic from an input
-   * @param input Input message
-   * @returns Extracted topic
+   * Create a serializable representation of the participant
+   * 
+   * @returns Serializable representation
    */
-  private extractTopic(input: string): string {
-    // A simple topic extraction implementation
-    // In a real application, this would be more sophisticated
-    const words = input.split(/\s+/);
-
-    // Find the longest word as a naive "topic" extraction
-    let topic = "that";
-    for (const word of words) {
-      // Ignore very short words and common stop words
-      if (
-        word.length > 3 &&
-        !["the", "and", "but", "for", "with"].includes(word.toLowerCase())
-      ) {
-        if (!topic || word.length > topic.length) {
-          topic = word;
-        }
-      }
-    }
-
-    return topic;
+  toJSON(): Record<string, unknown> {
+    return {
+      id: this.id,
+      name: this.name,
+      role: this.role,
+      dialogueStyle: this.dialogueStyle,
+      motivations: this.motivations,
+    };
   }
 }
 
 /**
- * Create a dialogue participant with the specified configuration
- *
- * @param config - Configuration for the dialogue participant
- * @param stringUtils - Optional string utilities implementation (uses default if not provided)
- * @returns A new DialogueParticipant instance
+ * Create a new dialogue participant
+ * 
+ * @param config - Configuration for the participant
+ * @param agent - Agent implementation (optional)
+ * @returns New dialogue participant
  */
 export function createDialogueParticipant(
   config: DialogueParticipantConfig,
-  stringUtils: IStringUtils = createStringUtils(),
+  agent?: IAgent
 ): DialogueParticipant {
-  return new DialogueParticipant(config, stringUtils);
+  return new DialogueParticipant(config, agent);
 }

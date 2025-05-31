@@ -1,11 +1,23 @@
 /**
  * Participants Module
- * 
- * Exports all participant types and implementations for convenings.
+ * Exports participant components for Convenings
  */
 
-// Export dialogue participant and its factory
-export * from "./dialogue_participant.ts";
+// Export base dialogue participant
+export {
+  DialogueParticipant,
+  createDialogueParticipant,
+  type DialogueParticipantConfig
+} from "./dialogue_participant.ts";
 
-// Export motivation system
-export * from "./motivations/mod.ts";
+// Export motivated dialogue participant
+export {
+  MotivatedDialogueParticipant,
+  createMotivatedDialogueParticipant,
+  createTruthSeekingParticipant,
+  createConsensusSeekingParticipant,
+  type MotivatedDialogueParticipantConfig
+} from "./motivated_dialogue_participant.ts";
+
+// Export bidding strategies
+export * from "./bidding/mod.ts";

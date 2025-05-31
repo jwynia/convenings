@@ -2,6 +2,38 @@
 
 This file tracks significant updates to the context network structure and content.
 
+## Context Network Update: Convenings Naming Convention Implementation - 2025-05-31
+
+### Information Nodes Modified/Created
+- Created `context-network/decisions/convenings_naming_convention.md`: Decision record for renaming interfaces and classes to align with the "Convenings" metaphor
+- Updated `context-network/decisions/decision_index.md`: Added entry for the Convenings Naming Convention decision
+
+### Implementation Changes
+- Created `src/convenings/interfaces.ts`: Defined new domain-specific interfaces using Convenings terminology
+- Created `src/convenings/implementation.ts`: Implemented adapter classes to bridge Mastra implementation to new interfaces
+- Created `src/convenings/participants/dialogue_participant.ts`: Renamed and refactored ConversationAgent to DialogueParticipant
+- Created `src/convenings/mod.ts`: Central export point for the Convenings API
+- Updated `src/mod.ts`: Changed to export only the Convenings interfaces, hiding Mastra implementation details
+
+### New Relationships Established
+- `context-network/decisions/convenings_naming_convention.md` → guided-by → `foundation/principles.md`
+- `src/convenings/interfaces.ts` → abstracts → `src/utils/interfaces.ts`
+- `src/convenings/implementation.ts` → implements → `src/convenings/interfaces.ts`
+- `src/convenings/implementation.ts` → adapts → `src/mastra/mod.ts`
+- `src/convenings/participants/dialogue_participant.ts` → replaces → `src/mastra/agents/conversation_agent.ts`
+
+### Navigation Implications
+- Public API now follows the "Convenings" metaphor, making it more intuitive and domain-aligned
+- Implementation details of Mastra are now hidden behind well-defined interfaces
+- Future additions should use the Convenings naming convention in the public API
+
+### Follow-up Recommendations
+- Create tests for the new Convenings interfaces and implementations
+- Consider migrating existing ConversationAgent tests to DialogueParticipant
+- Update documentation to reflect the new naming convention
+- Consider further expanding the convening metaphor to other parts of the system
+- Evaluate potential for human-in-the-loop implementations that leverage the participant interface
+
 ## Context Network Update: CI Pipeline and DI Expansion - 2025-05-31
 
 ### Information Nodes Modified

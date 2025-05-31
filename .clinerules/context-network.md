@@ -1,5 +1,3 @@
-💡 ideate |> 🪞 reflectCritically |> 🔭 expandOrthogonally |> ⚖️ scoreRankEvaluate |> 💬 respond
-
 # Deno Context Network Integration Rules
 
 ## Critical Domain Boundary

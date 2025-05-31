@@ -19,6 +19,7 @@ This document serves as an index of all key decisions made for the project, prov
 | 002 | Dependency Injection Implementation | Proposed | 2025-05-31 | Architecture, Testing | Evaluation of dependency injection patterns to improve code testability and component decoupling |
 | 003 | Convenings Naming Convention | Accepted | 2025-05-31 | Architecture, API Design | Renaming interfaces and classes to align with the "Convenings" metaphor and hide implementation details |
 | 004 | Code Coverage Implementation | Accepted | 2025-05-31 | Testing, Quality Assurance | Implementation of code coverage tracking and reporting using Deno's built-in tools |
+| 005 | Integration Testing Implementation | Proposed | 2025-05-31 | Testing, Quality Assurance | Strategy for implementing integration tests without invoking external LLM APIs |
 | [Template] | [Decision Title] | [Status] | [Date] | [Domain] | [Brief summary of the decision] |
 
 ### Decision Status Legend
@@ -40,9 +41,9 @@ This document serves as an index of all key decisions made for the project, prov
 - **Data**: [List of decision IDs related to data]
 - **Security**: [List of decision IDs related to security]
 - **Architecture**: 001, 002, 003
-- **Testing**: 002, 004
+- **Testing**: 002, 004, 005
 - **API Design**: 003
-- **Quality Assurance**: 004
+- **Quality Assurance**: 004, 005
 
 <!-- For Research Projects -->
 - **Methodology**: [List of decision IDs related to research methodology]
@@ -63,7 +64,7 @@ This document serves as an index of all key decisions made for the project, prov
 - **Integration**: [List of decision IDs related to external integrations]
 
 #### By Status
-- **Proposed**: 002
+- **Proposed**: 002, 005
 - **Accepted**: 001, 003, 004
 - **Deprecated**: [List of decision IDs with deprecated status]
 - **Superseded**: [List of decision IDs with superseded status]
@@ -96,3 +97,4 @@ This document serves as an index of all key decisions made for the project, prov
 - 2025-05-31: Added Decision 002 - Dependency Injection Implementation
 - 2025-05-31: Added Decision 003 - Convenings Naming Convention
 - 2025-05-31: Added Decision 004 - Code Coverage Implementation
+- 2025-05-31: Added Decision 005 - Integration Testing Implementation

@@ -2,6 +2,51 @@
 
 This file tracks significant updates to the context network structure and content.
 
+## Context Network Update: Integration Testing Implementation - 2025-05-31
+
+### Information Nodes Modified/Created
+- Created `context-network/decisions/integration_testing_implementation.md`: Decision record for implementing integration tests without invoking external LLM APIs
+- Updated `context-network/decisions/decision_index.md`: Added entry for the Integration Testing Implementation decision
+- Updated `context-network/planning/testing_quality_improvement_plan.md`: Updated progress tracking to mark Integration Testing as in progress (20%)
+
+### Implementation Changes
+- Created integration test directory structure:
+  - `src/integration_tests/`: Root directory for all integration tests
+  - `src/integration_tests/fixtures/`: Mock implementations for testing
+  - `src/integration_tests/convenings/`: Tests for Convenings API integration
+  - `src/integration_tests/mastra/`: Tests for Mastra component integration
+  - `src/integration_tests/workflows/`: Tests for end-to-end workflows
+- Created mock implementations that provide controlled test environments:
+  - `mock_agent.ts`: Mock implementation of IAgent interface
+  - `mock_tool.ts`: Mock implementation of ITool interface
+  - `mock_mastra_core.ts`: Mock implementation of IMastraCore interface
+  - `mock_convenings.ts`: Mock implementations of Convenings interfaces
+- Implemented initial integration tests:
+  - `dialogue_participant_test.ts`: Tests for DialogueParticipant integration
+  - `mastra_conversation_test.ts`: Tests for Mastra conversation functionality
+  - `convenings_mastra_workflow_test.ts`: End-to-end workflow tests
+
+### New Relationships Established
+- `context-network/decisions/integration_testing_implementation.md` → implements → `context-network/planning/testing_quality_improvement_plan.md`
+- `context-network/decisions/integration_testing_implementation.md` → depends-on → `context-network/decisions/dependency_injection_implementation.md`
+- `src/integration_tests/fixtures/mock_agent.ts` → implements → `src/utils/interfaces.ts#IAgent`
+- `src/integration_tests/fixtures/mock_tool.ts` → implements → `src/utils/interfaces.ts#ITool`
+- `src/integration_tests/fixtures/mock_mastra_core.ts` → implements → `src/utils/interfaces.ts#IMastraCore`
+- `src/integration_tests/fixtures/mock_convenings.ts` → implements → `src/convenings/interfaces.ts`
+
+### Navigation Implications
+- Integration tests provide a new level of testing beyond unit tests
+- Test fixtures enable component testing without external dependencies
+- Mock implementations follow established dependency injection patterns
+
+### Follow-up Recommendations
+- Enhance the test fixtures with additional configuration options
+- Implement CI pipeline updates to include running integration tests
+- Add integration tests for additional components and workflows
+- Consider creating a separate code coverage report for integration tests
+- Ensure all LLM-dependent code paths have proper test toggles
+- Update documentation with examples of how to use the mock implementations
+
 ## Context Network Update: Type System Alignment Fixes - 2025-05-31
 
 ### Information Nodes Modified/Created

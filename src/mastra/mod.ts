@@ -3,114 +3,217 @@
  * Provides core functionality for Mastra agent system
  */
 
-// In Deno, we typically use URL imports instead of package imports
-// For demonstration, we'll mock the Mastra interface
-// In production, you would use proper Deno URL imports
+import {
+  IAgent,
+  IAgentConfig,
+  IMastraCore,
+  ITool,
+  IToolConfig,
+  IWorkflowResult,
+} from "../utils/interfaces.ts";
 
 /**
- * Basic Mastra interface
+ * Agent Provider interface for dependency injection
+ * Allows custom agent creation logic to be injected
  */
-export interface MastraInstance {
-  createAgent: (config: AgentConfig) => Agent;
-  createTool: (config: ToolConfig) => Tool;
-  executeWorkflow: (workflowId: string, params: Record<string, unknown>) => Promise<WorkflowResult>;
+export interface IAgentProvider {
+  /**
+   * Create an agent with the specified configuration
+   *
+   * @param config - Configuration for the agent
+   * @returns The created agent
+   */
+  createAgent(config: IAgentConfig): IAgent;
 }
 
 /**
- * Agent configuration interface
+ * Tool Provider interface for dependency injection
+ * Allows custom tool creation logic to be injected
  */
-export interface AgentConfig {
-  id: string;
-  model: string;
-  abilities?: string[];
-  [key: string]: unknown;
+export interface IToolProvider {
+  /**
+   * Create a tool with the specified configuration
+   *
+   * @param config - Configuration for the tool
+   * @returns The created tool
+   */
+  createTool(config: IToolConfig): ITool;
 }
 
 /**
- * Tool configuration interface
+ * Workflow Provider interface for dependency injection
+ * Allows custom workflow execution logic to be injected
  */
-export interface ToolConfig {
-  id: string;
-  description: string;
-  handler: (params: Record<string, unknown>) => Promise<unknown>;
+export interface IWorkflowProvider {
+  /**
+   * Execute a workflow with the specified parameters
+   *
+   * @param workflowId - Identifier for the workflow to execute
+   * @param params - Parameters for workflow execution
+   * @returns Result of workflow execution
+   */
+  executeWorkflow(
+    workflowId: string,
+    params: Record<string, unknown>,
+  ): Promise<IWorkflowResult>;
 }
 
 /**
- * Agent interface
+ * Default Agent Provider implementation
  */
-export interface Agent {
-  id: string;
-  execute: (input: string) => Promise<string>;
+export class DefaultAgentProvider implements IAgentProvider {
+  /**
+   * Create an agent with the specified configuration
+   *
+   * @param config - Configuration for the agent
+   * @returns The created agent
+   */
+  createAgent(config: IAgentConfig): IAgent {
+    return {
+      id: config.id,
+      execute: async (input: string): Promise<string> => {
+        return `Agent ${config.id} executed with input: ${input}`;
+      },
+    };
+  }
 }
 
 /**
- * Workflow result interface
+ * Default Tool Provider implementation
  */
-export interface WorkflowResult {
-  id: string;
-  status: 'success' | 'error';
-  output: unknown;
+export class DefaultToolProvider implements IToolProvider {
+  /**
+   * Create a tool with the specified configuration
+   *
+   * @param config - Configuration for the tool
+   * @returns The created tool
+   */
+  createTool(config: IToolConfig): ITool {
+    return {
+      id: config.id,
+      execute: config.handler,
+    };
+  }
 }
 
 /**
- * Create a Mastra instance
- * This mocks the original Mastra functionality from the Node.js version
+ * Default Workflow Provider implementation
  */
-export class Mastra implements MastraInstance {
-  private agents: Map<string, Agent>;
-  private tools: Map<string, ToolConfig>;
+export class DefaultWorkflowProvider implements IWorkflowProvider {
+  /**
+   * Execute a workflow with the specified parameters
+   *
+   * @param workflowId - Identifier for the workflow to execute
+   * @param params - Parameters for workflow execution
+   * @returns Result of workflow execution
+   */
+  async executeWorkflow(
+    workflowId: string,
+    params: Record<string, unknown>,
+  ): Promise<IWorkflowResult> {
+    return {
+      id: workflowId,
+      status: "success",
+      output: `Executed workflow ${workflowId} with params: ${
+        JSON.stringify(params)
+      }`,
+    };
+  }
+}
 
-  constructor() {
+/**
+ * Mastra Core implementation
+ * This implements the IMastraCore interface and uses dependency injection
+ */
+export class Mastra implements IMastraCore {
+  private agents: Map<string, IAgent>;
+  private tools: Map<string, IToolConfig>;
+  private agentProvider: IAgentProvider;
+  private toolProvider: IToolProvider;
+  private workflowProvider: IWorkflowProvider;
+
+  /**
+   * Create a new Mastra instance
+   *
+   * @param agentProvider - Provider for agent creation (optional)
+   * @param toolProvider - Provider for tool creation (optional)
+   * @param workflowProvider - Provider for workflow execution (optional)
+   */
+  constructor(
+    agentProvider: IAgentProvider = new DefaultAgentProvider(),
+    toolProvider: IToolProvider = new DefaultToolProvider(),
+    workflowProvider: IWorkflowProvider = new DefaultWorkflowProvider(),
+  ) {
     this.agents = new Map();
     this.tools = new Map();
+    this.agentProvider = agentProvider;
+    this.toolProvider = toolProvider;
+    this.workflowProvider = workflowProvider;
   }
 
   /**
    * Create a new agent
+   *
+   * @param config - Configuration for the agent
+   * @returns The created agent
    */
-  createAgent(config: AgentConfig): Agent {
-    const agent = {
-      id: config.id,
-      execute: async (input: string): Promise<string> => {
-        return `Agent ${config.id} executed with input: ${input}`;
-      }
-    };
-    
+  createAgent(config: IAgentConfig): IAgent {
+    const agent = this.agentProvider.createAgent(config);
     this.agents.set(config.id, agent);
     return agent;
   }
 
   /**
    * Create a new tool
+   *
+   * @param config - Configuration for the tool
+   * @returns The created tool
    */
-  createTool(config: ToolConfig): Tool {
+  createTool(config: IToolConfig): ITool {
     this.tools.set(config.id, config);
-    return {
-      id: config.id,
-      execute: config.handler
-    };
+    return this.toolProvider.createTool(config);
   }
 
   /**
    * Execute a workflow
+   *
+   * @param workflowId - Identifier for the workflow to execute
+   * @param params - Parameters for workflow execution
+   * @returns Result of workflow execution
    */
-  async executeWorkflow(workflowId: string, params: Record<string, unknown>): Promise<WorkflowResult> {
-    // Simple mock implementation
-    return {
-      id: workflowId,
-      status: 'success',
-      output: `Executed workflow ${workflowId} with params: ${JSON.stringify(params)}`
-    };
+  async executeWorkflow(
+    workflowId: string,
+    params: Record<string, unknown>,
+  ): Promise<IWorkflowResult> {
+    return this.workflowProvider.executeWorkflow(workflowId, params);
   }
 }
 
 /**
- * Tool interface
+ * Create a Mastra instance with optional dependencies
+ *
+ * @param agentProvider - Provider for agent creation (optional)
+ * @param toolProvider - Provider for tool creation (optional)
+ * @param workflowProvider - Provider for workflow execution (optional)
+ * @returns A new Mastra instance
  */
-export interface Tool {
-  id: string;
-  execute: (params: Record<string, unknown>) => Promise<unknown>;
+export function createMastra(
+  agentProvider?: IAgentProvider,
+  toolProvider?: IToolProvider,
+  workflowProvider?: IWorkflowProvider,
+): IMastraCore {
+  return new Mastra(agentProvider, toolProvider, workflowProvider);
 }
 
-// Export a default instance
-export const mastra = new Mastra();
+// Export a default instance for backward compatibility
+export const mastra = createMastra();
+
+// Re-export interfaces from utils for convenience
+export type {
+  IAgent,
+  IAgentConfig,
+  IMastraCore,
+  ITool,
+  IToolConfig,
+  IWorkflowResult,
+};

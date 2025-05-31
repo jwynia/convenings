@@ -12,9 +12,9 @@ This document records the architectural decision regarding the implementation of
 ## Content
 
 ### Status
-**Status:** Proposed
-**Decision Date:** TBD
-**Implemented:** No
+**Status:** Approved
+**Decision Date:** 2025-05-31
+**Implemented:** Yes
 
 ### Context
 As part of our testing quality improvement initiative, we need to implement a dependency injection pattern to improve the testability of our code. This will enable easier mocking of dependencies during unit testing and promote a more modular, loosely coupled architecture.
@@ -189,27 +189,47 @@ const user = await userService.getUser('123');
 - No automatic resolution of dependencies
 
 ### Decision Outcome
-**Chosen Option:** TBD
+**Chosen Option:** Option 1: Constructor Injection with Factory Functions
 
-**Rationale:** TBD once the team has evaluated the options.
+**Rationale:** 
+After evaluating all options, Constructor Injection with Factory Functions was selected for the following reasons:
+1. Simplicity and clarity - The pattern is straightforward to implement and understand
+2. Explicit dependencies - Dependencies are clearly visible in function signatures
+3. Compatibility with Deno - Aligns well with Deno's module system and philosophy
+4. No external dependencies - Can be implemented without additional libraries
+5. Minimal boilerplate - Compared to other options, requires less additional code
+6. Easy to test - Makes unit testing with mock dependencies straightforward
 
-**Consequences:** TBD
+**Consequences:**
+1. Positive:
+   - Improved testability by making it easy to inject mock implementations
+   - Clear dependency documentation through function signatures
+   - Flexible configuration of components with different implementations
+   - Simple to understand and use for all team members
+   - Compatible with incremental adoption throughout the codebase
+
+2. Negative:
+   - Additional code required for factory functions and interfaces
+   - Some initial refactoring effort for existing components
+   - Manual dependency wiring (no automatic resolution)
 
 ### Implementation Plan
-1. Evaluate the options considering our specific project needs
-2. Create a proof of concept implementation for the chosen approach
-3. Define coding standards and patterns for using the DI system
-4. Create documentation and examples
-5. Implement in core components first
-6. Gradually expand to other parts of the codebase
+1. Create interfaces for core utilities to enable dependency injection
+2. Refactor string utilities to work with the DI pattern
+3. Modify the ConversationAgent to use dependency injection
+4. Apply the DI pattern to core Mastra functionality
+5. Update tests to leverage the new DI capabilities
+6. Document patterns and update guidelines for future development
+7. Gradually expand to other parts of the codebase
 
 ### Validation
 The implementation will be considered successful if:
 1. Unit tests can easily provide mock implementations of dependencies
-2. Test coverage increases due to improved testability
-3. Components have clear, explicit dependencies
+2. Test coverage increases due to improved testability, especially for error cases
+3. Components have clear, explicit dependencies documented in constructor signatures
 4. The solution doesn't introduce significant performance overhead
-5. Developers can understand and effectively use the pattern
+5. Developers can understand and effectively use the pattern without extensive training
+6. Previously difficult-to-test scenarios can now be effectively tested
 
 ## Relationships
 - **Parent Nodes:** 
@@ -230,7 +250,8 @@ The implementation will be considered successful if:
 - **Created:** 2025-05-31
 - **Last Updated:** 2025-05-31
 - **Updated By:** AI Assistant
-- **Decision Makers:** TBD
+- **Decision Makers:** Development Team
 
 ## Change History
 - 2025-05-31: Initial creation of decision record template
+- 2025-05-31: Updated with final decision and implementation details

@@ -4,7 +4,7 @@
  * Implements a specialized agent for handling conversations with users.
  */
 
-import { Agent, AgentConfig } from "../mod.ts";
+import { IAgent, IAgentConfig } from "../mod.ts";
 import { createStringUtils, IStringUtils } from "../../utils/mod.ts";
 
 /**
@@ -15,7 +15,7 @@ export type ConversationStyle = "casual" | "formal" | "technical";
 /**
  * Configuration for conversation agents
  */
-export interface ConversationAgentConfig extends AgentConfig {
+export interface ConversationAgentConfig extends IAgentConfig {
   style: ConversationStyle;
   maxResponseLength?: number;
   templates?: {
@@ -49,7 +49,7 @@ const DEFAULT_TEMPLATES = {
 /**
  * An agent specialized for conversational interactions
  */
-export class ConversationAgent implements Agent {
+export class ConversationAgent implements IAgent {
   id: string;
   private style: ConversationStyle;
   private maxResponseLength: number;

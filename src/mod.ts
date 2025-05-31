@@ -8,7 +8,7 @@
  */
 
 // Export the public API from convenings module
-export {
+export type {
   // Core interfaces
   IConveningSystem,
   IParticipant,
@@ -19,7 +19,9 @@ export {
   IParticipantRegistry,
   IResourceRegistry,
   IConveningFacilitator,
-  
+} from "./convenings/mod.ts";
+
+export {  
   // Implementation
   ConveningSystem,
   createConvening,
@@ -28,9 +30,10 @@ export {
   // Participant implementations
   DialogueParticipant,
   createDialogueParticipant,
-  DialogueStyle,
-  DialogueParticipantConfig,
 } from "./convenings/mod.ts";
+
+// Export types that need 'export type' syntax with isolatedModules
+export type { DialogueStyle, DialogueParticipantConfig } from "./convenings/mod.ts";
 
 // Log startup message
 console.log("Convenings system initializing...");

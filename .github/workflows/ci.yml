@@ -7,9 +7,8 @@ on:
     branches: [main]
 
 jobs:
-  test:
+  lint-and-check:
     runs-on: ubuntu-latest
-
     steps:
       - name: Checkout repository
         uses: actions/checkout@v3
@@ -37,8 +36,32 @@ jobs:
       - name: Type check
         run: deno check src/mod.ts
 
-      - name: Run tests with coverage
-        run: deno test --allow-net --allow-read --allow-env --coverage=coverage
+      - name: Build verification
+        run: deno run --check src/mod.ts
+
+  unit-tests:
+    runs-on: ubuntu-latest
+    needs: lint-and-check
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+
+      - name: Setup Deno
+        uses: denoland/setup-deno@v1
+        with:
+          deno-version: v1.x
+
+      - name: Cache Deno dependencies
+        uses: actions/cache@v3
+        with:
+          path: |
+            ~/.cache/deno
+          key: ${{ runner.os }}-deno-${{ hashFiles('**/deno.lock') }}
+          restore-keys: |
+            ${{ runner.os }}-deno-
+
+      - name: Run unit tests with coverage
+        run: deno test --allow-net --allow-read --allow-env --coverage=coverage --ignore=src/integration_tests/
 
       - name: Generate coverage report
         run: deno coverage --lcov --output=coverage/lcov.info coverage
@@ -46,9 +69,41 @@ jobs:
       - name: Upload coverage report
         uses: actions/upload-artifact@v3
         with:
-          name: coverage-report
+          name: unit-coverage-report
           path: coverage/
           retention-days: 7
 
-      - name: Build verification
-        run: deno run --check src/mod.ts
+  integration-tests:
+    runs-on: ubuntu-latest
+    needs: lint-and-check
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+
+      - name: Setup Deno
+        uses: denoland/setup-deno@v1
+        with:
+          deno-version: v1.x
+
+      - name: Cache Deno dependencies
+        uses: actions/cache@v3
+        with:
+          path: |
+            ~/.cache/deno
+          key: ${{ runner.os }}-deno-${{ hashFiles('**/deno.lock') }}
+          restore-keys: |
+            ${{ runner.os }}-deno-
+
+      - name: Run integration tests with coverage
+        run: deno test --allow-net --allow-read --allow-env --coverage=integration-coverage src/integration_tests/
+        timeout-minutes: 10
+
+      - name: Generate integration coverage report
+        run: deno coverage --lcov --output=integration-coverage/lcov.info integration-coverage
+
+      - name: Upload integration coverage report
+        uses: actions/upload-artifact@v3
+        with:
+          name: integration-coverage-report
+          path: integration-coverage/
+          retention-days: 7

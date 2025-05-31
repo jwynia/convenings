@@ -18,6 +18,7 @@ This document serves as an index of all key decisions made for the project, prov
 | 001 | Modular Agent Interaction Patterns | Accepted | 2025-05-31 | System Architecture | Architectural approach for making agent interaction patterns (flows, networks, delegation) modular and easily switchable, and establishing broader process principles for component design |
 | 002 | Dependency Injection Implementation | Proposed | 2025-05-31 | Architecture, Testing | Evaluation of dependency injection patterns to improve code testability and component decoupling |
 | 003 | Convenings Naming Convention | Accepted | 2025-05-31 | Architecture, API Design | Renaming interfaces and classes to align with the "Convenings" metaphor and hide implementation details |
+| 004 | Code Coverage Implementation | Accepted | 2025-05-31 | Testing, Quality Assurance | Implementation of code coverage tracking and reporting using Deno's built-in tools |
 | [Template] | [Decision Title] | [Status] | [Date] | [Domain] | [Brief summary of the decision] |
 
 ### Decision Status Legend
@@ -39,8 +40,9 @@ This document serves as an index of all key decisions made for the project, prov
 - **Data**: [List of decision IDs related to data]
 - **Security**: [List of decision IDs related to security]
 - **Architecture**: 001, 002, 003
-- **Testing**: 002
+- **Testing**: 002, 004
 - **API Design**: 003
+- **Quality Assurance**: 004
 
 <!-- For Research Projects -->
 - **Methodology**: [List of decision IDs related to research methodology]
@@ -62,7 +64,7 @@ This document serves as an index of all key decisions made for the project, prov
 
 #### By Status
 - **Proposed**: 002
-- **Accepted**: 001, 003
+- **Accepted**: 001, 003, 004
 - **Deprecated**: [List of decision IDs with deprecated status]
 - **Superseded**: [List of decision IDs with superseded status]
 
@@ -93,3 +95,4 @@ This document serves as an index of all key decisions made for the project, prov
 - 2025-05-31: Initial creation of decision index
 - 2025-05-31: Added Decision 002 - Dependency Injection Implementation
 - 2025-05-31: Added Decision 003 - Convenings Naming Convention
+- 2025-05-31: Added Decision 004 - Code Coverage Implementation

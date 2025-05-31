@@ -37,8 +37,18 @@ jobs:
       - name: Type check
         run: deno check src/mod.ts
 
-      - name: Run tests
-        run: deno test --allow-net --allow-env
+      - name: Run tests with coverage
+        run: deno test --allow-net --allow-read --allow-env --coverage=coverage
+
+      - name: Generate coverage report
+        run: deno coverage --lcov --output=coverage/lcov.info coverage
+
+      - name: Upload coverage report
+        uses: actions/upload-artifact@v3
+        with:
+          name: coverage-report
+          path: coverage/
+          retention-days: 7
 
       - name: Build verification
         run: deno run --check src/mod.ts

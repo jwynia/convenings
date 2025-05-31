@@ -3,7 +3,11 @@
     "dev": "deno run --allow-net --allow-read --allow-env src/mod.ts",
     "test": "deno test --allow-net --allow-read --allow-env",
     "coverage": "deno test --coverage=coverage --allow-net --allow-read --allow-env",
-    "report": "deno coverage coverage"
+    "report": "deno coverage coverage",
+    "report:detailed": "deno coverage coverage --detailed",
+    "report:html": "deno coverage coverage --html",
+    "report:lcov": "deno coverage coverage --lcov --output=coverage/lcov.info",
+    "coverage:full": "deno task coverage && deno task report:detailed && deno task report:html && deno task report:lcov"
   },
   "imports": {
     "@convenings/": "./src/"

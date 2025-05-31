@@ -2,12 +2,23 @@
   "tasks": {
     "dev": "deno run --allow-net --allow-read --allow-env src/mod.ts",
     "test": "deno test --allow-net --allow-read --allow-env",
+    "test:unit": "deno test --allow-net --allow-read --allow-env --ignore=src/integration_tests/",
+    "test:integration": "deno test --allow-net --allow-read --allow-env src/integration_tests/",
     "coverage": "deno test --coverage=coverage --allow-net --allow-read --allow-env",
+    "coverage:unit": "deno test --coverage=coverage --allow-net --allow-read --allow-env --ignore=src/integration_tests/",
+    "coverage:integration": "deno test --coverage=integration-coverage --allow-net --allow-read --allow-env src/integration_tests/",
     "report": "deno coverage coverage",
     "report:detailed": "deno coverage coverage --detailed",
     "report:html": "deno coverage coverage --html",
     "report:lcov": "deno coverage coverage --lcov --output=coverage/lcov.info",
-    "coverage:full": "deno task coverage && deno task report:detailed && deno task report:html && deno task report:lcov"
+    "report:integration": "deno coverage integration-coverage",
+    "report:integration:detailed": "deno coverage integration-coverage --detailed",
+    "report:integration:html": "deno coverage integration-coverage --html",
+    "report:integration:lcov": "deno coverage integration-coverage --lcov --output=integration-coverage/lcov.info",
+    "coverage:full": "deno task coverage && deno task report:detailed && deno task report:html && deno task report:lcov",
+    "coverage:integration:full": "deno task coverage:integration && deno task report:integration:detailed && deno task report:integration:html && deno task report:integration:lcov",
+    "coverage:all": "deno task coverage:full && deno task coverage:integration:full",
+    "combine-coverage": "deno run --allow-read --allow-write scripts/combine_coverage.ts"
   },
   "imports": {
     "@convenings/": "./src/"

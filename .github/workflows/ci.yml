@@ -96,14 +96,65 @@ jobs:
 
       - name: Run integration tests with coverage
         run: deno test --allow-net --allow-read --allow-env --coverage=integration-coverage src/integration_tests/
-        timeout-minutes: 10
+        timeout-minutes: 15
 
       - name: Generate integration coverage report
         run: deno coverage --lcov --output=integration-coverage/lcov.info integration-coverage
+
+      - name: Generate detailed integration coverage report
+        run: deno coverage integration-coverage --detailed > integration-coverage-report.txt
 
       - name: Upload integration coverage report
         uses: actions/upload-artifact@v3
         with:
           name: integration-coverage-report
-          path: integration-coverage/
+          path: |
+            integration-coverage/
+            integration-coverage-report.txt
+          retention-days: 7
+      
+      - name: Check for any test failures
+        run: |
+          if [ $? -ne 0 ]; then
+            echo "Integration tests failed. See detailed logs above."
+            exit 1
+          fi
+
+  combined-coverage:
+    runs-on: ubuntu-latest
+    needs: [unit-tests, integration-tests]
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+
+      - name: Download unit test coverage
+        uses: actions/download-artifact@v3
+        with:
+          name: unit-coverage-report
+          path: coverage
+
+      - name: Download integration test coverage
+        uses: actions/download-artifact@v3
+        with:
+          name: integration-coverage-report
+          path: integration-coverage
+
+      - name: Setup Deno
+        uses: denoland/setup-deno@v1
+        with:
+          deno-version: v1.x
+
+      - name: Generate combined coverage summary
+        run: |
+          echo "# Coverage Summary Report" > coverage-summary.md
+          echo "## Unit Tests" >> coverage-summary.md
+          deno coverage coverage --summary >> coverage-summary.md
+          echo "## Integration Tests" >> coverage-summary.md
+          deno coverage integration-coverage --summary >> coverage-summary.md
+
+      - name: Upload combined coverage summary
+        uses: actions/upload-artifact@v3
+        with:
+          name: combined-coverage-summary
+          path: coverage-summary.md
           retention-days: 7

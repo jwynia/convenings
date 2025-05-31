@@ -1,42 +1,130 @@
-# Deno Context Network
-This project is a starter template for a Deno-based software project context-network (more info at https://jwynia.github.io/context-networks/). It can be used as a collaboration context manager for building Deno apps of all kinds.
+# Convenings
 
-## Getting Started
-Context networks are intended to be used with an LLM agent that has file access to all of the files in the project folder. For people in software development professions, that can be agents they write. But, for most people, the easiest access to such agents is via IDE coding tools.
+A modular multi-agent dialogue system for Deno, enabling structured conversations between AI participants.
 
-Set up the prompts (see below) and start a planning conversation and describe your project, your goals, your constraints, etc. When the plan looks good, let it enhance the context network. Then start with real tasks for the project.
+## Overview
 
-## Cost
-Because context networks are a relatively cutting-edge approach to collaboration with LLM AI agents, these tools do cost money and some of the best of them can cost more money than you may be expecting. The costs on such things are dropping and much of what we're doing with context networks is figuring out the ways to work that will be more widespread next year and beyond, when these costs drop. If these tools are too expensive for your budget, that probably means you need to wait a bit.
+Convenings is a framework for creating and facilitating structured dialogue between multiple AI participants. It provides abstractions for creating dialogue systems with customizable participant behaviors, motivations, and interaction patterns.
 
-## Tools
-Cursor (https://www.cursor.com/) is an all-in-one that comes with LLM chat and an agent that can act on the files.
+The system is built on a metaphor of "convenings" - structured gatherings where participants engage in purposeful dialogue. This approach makes the API intuitive and hides implementation details, allowing for flexible and extensible multi-agent systems.
 
-Cursor is built on VSCode (https://code.visualstudio.com/), which is a more generic code/text editor that can have plugins added. One we use a lot with context networks is Cline (https://cline.bot/). Cline's agent can be pointed at a wide range of LLM APIs that you use your own keys/billing for or their own management of that. A popular solution is to use OpenRouter (https://openrouter.ai/) which lets you use most of the LLM models available today.
+## Features
 
-## Patterns
-### Prompts
-For whatever agent you use, you need to include instructions in the system prompt or custom instructions that tell it about context networks and how to navigate them. The prompt in /inbox/custom-instructions-prompt.md is the one a lot of people are using for Cline with Claude Sonnet as the model.
+- **Participant-based Architecture**: Model dialogue participants with customizable behaviors and motivations
+- **Motivation System**: Implement participants with different motivational drivers (truth-seeking, consensus-seeking, etc.)
+- **Modular Design**: Extend the system with custom participants, resources, and convening patterns
+- **Clean Abstractions**: Clear separation between the public API and internal implementation details
+- **Human-in-the-Loop Ready**: Architecture naturally accommodates human participants alongside AI agents
+- **Comprehensive Testing**: Extensive unit and integration tests ensure reliability
 
-Add it in either your agent's configuration screen or via it's file-based prompt management system.
+## Installation
 
-### Plan/Act and Specific Scope
-Cline and many other agents have multiple modes, usually offering one that lets you have a conversation with it separate from it taking action on files. In Cline, that's "Plan". In that mode, it won't make any changes to your files.
+```typescript
+// deps.ts
+export { 
+  ConveningSystem,
+  createConvening,
+  DialogueParticipant,
+  createDialogueParticipant
+} from "https://deno.land/x/convenings/mod.ts";
 
-Use that mode aggressively to get to a specific plan for what will happen when you toggle to act. That plan should have a clear definition of what "done" will look like, should be as close to a single action as possible.
+export type {
+  IConveningSystem,
+  IParticipant,
+  IResource,
+  IConveningOutcome,
+  DialogueStyle,
+  DialogueParticipantConfig
+} from "https://deno.land/x/convenings/mod.ts";
+```
 
-That often means that the action is to detail out a list of tasks that you'll actually have the agent do separately, one at a time. The "do one thing" can mean break the existing scope down another level to get to a more detailed plan. 
+## Quick Start
 
-Basically, the more specific the action that Act mode or its equivalent is given, the better job it will do at managing token budget, at not volunteering to do a bunch of extra things,  and the more likely it does something you've already had a chance to approve.
+```typescript
+import { 
+  createConvening, 
+  createDialogueParticipant 
+} from "./deps.ts";
 
-### Monitor and Interrupt
-The more you actually read and monitor what your agent is doing for anything that you disagree with or sounds incorrect and step in to interrupt, the better your context network will mature. Like hiring a new assistant, where for the first few weeks, you have to tell them your preferences and ways you want things done, it pays off over the long haul.
+// Create dialogue participants
+const alice = createDialogueParticipant({
+  name: "Alice",
+  dialogueStyle: "cooperative",
+  motivation: "truth-seeking"
+});
 
-Interrupt, flip to Plan mode, and ask things like:
+const bob = createDialogueParticipant({
+  name: "Bob",
+  dialogueStyle: "inquisitive",
+  motivation: "consensus-seeking"
+});
 
-* How can we document into the context network a way of working so we don't repeat (the problem/misunderstanding above)?
-* I'd really prefer we always write out a plan with tasks before doing things ad hoc. How can we clarify what's in the context network to make that our process going forward?
+// Create a convening with participants
+const dialogue = createConvening({
+  participants: [alice, bob],
+  topic: "The future of AI governance",
+  maxRounds: 5
+});
 
+// Start the dialogue
+const outcome = await dialogue.facilitate();
+console.log(outcome.summary);
+```
 
-### Retrospective
-At the end of tasks and periodically AS a new task, ask how things could be improved. For task end, "What from this conversation and task should be documented in the context network?" For periodic retrospectives, "What have we learned in this project that could be used to improve the context network for our efforts going forward?"
+## Core Concepts
+
+### Convening System
+
+The `ConveningSystem` is the main entry point for creating and managing convenings. It provides access to participant and resource registries.
+
+### Participants
+
+Participants are the agents that engage in dialogue. The system comes with built-in participant types:
+
+- `DialogueParticipant`: A general-purpose dialogue participant
+- Motivation-specific participants: Truth-seeking, consensus-seeking, etc.
+
+### Resources
+
+Resources are tools and capabilities available to participants during a convening.
+
+### Facilitators
+
+Facilitators manage the flow of dialogue in a convening, ensuring that participants interact according to defined patterns.
+
+## Development
+
+### Prerequisites
+
+- [Deno](https://deno.land/) v1.34 or higher
+
+### Running Tests
+
+```bash
+deno test --allow-read
+```
+
+### Running Coverage
+
+```bash
+deno test --coverage=coverage
+deno run -A scripts/combine_coverage.ts
+```
+
+## Documentation
+
+For more detailed documentation, refer to the context network documentation in the `context-network/` directory.
+
+Key documentation includes:
+
+- Architecture: `context-network/elements/multi-agent-dialogue/architecture.md`
+- Motivation System: `context-network/elements/multi-agent-dialogue/motivation_system.md`
+- Design Decisions: `context-network/decisions/`
+
+## License
+
+MIT
+
+## Contributing
+
+Contributions are welcome! Please feel free to submit a Pull Request.

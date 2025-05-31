@@ -26,22 +26,32 @@ This document outlines the core principles and standards that guide decision-mak
 
 ### Design Principles
 
-[List and describe the key principles that guide design decisions]
+#### Component Design Principles
 
-1. **[Design Principle 1]**
-   [Description of Design Principle 1]
+1. **Composability**
+   Components should be designed to be easily combined with other components to create larger systems. The interfaces between components should be clean, well-defined, and minimal to facilitate easy integration.
    
-   *Example:* [Concrete example of this principle in action]
+   *Example:* The abstract interaction layer allows different agent interaction patterns (flows, networks, delegation) to be seamlessly combined with other system components.
 
-2. **[Design Principle 2]**
-   [Description of Design Principle 2]
+2. **Reusability**
+   Components should be designed to be used in multiple contexts without modification. They should be general enough to serve various use cases while remaining focused on their specific responsibility.
    
-   *Example:* [Concrete example of this principle in action]
+   *Example:* Bidding strategies are designed to work with any motivated agent implementation, not just specific dialogue agents.
 
-3. **[Design Principle 3]**
-   [Description of Design Principle 3]
+3. **Extensibility**
+   Components should be designed to allow for extension without modifying the original code. This typically involves well-defined extension points, hooks, or inheritance hierarchies.
    
-   *Example:* [Concrete example of this principle in action]
+   *Example:* The bidding strategy interface allows for creating new strategies without modifying existing ones.
+
+4. **Modularity**
+   Components should have clear boundaries, encapsulated functionality, and well-defined interfaces. They should be cohesive (focused on a single responsibility) and loosely coupled to other components.
+   
+   *Example:* The separation between the motivation system and bidding strategies allows each to evolve independently.
+
+5. **Abstraction**
+   Implementation details should be hidden behind well-defined interfaces. Components should expose what they do, not how they do it.
+   
+   *Example:* The agent interaction system interface hides the details of how specific interaction patterns (flows, networks, delegation) are implemented.
 
 ### Standards and Guidelines
 
@@ -73,16 +83,20 @@ This document outlines the core principles and standards that guide decision-mak
 
 ### Process Principles
 
-[List and describe the principles that guide development and operational processes]
+1. **Design for Evolution**
+   Systems should be designed with the expectation that they will need to change over time. This means avoiding assumptions that lock in specific implementation details and instead creating flexible architectures that can adapt to new requirements.
 
-1. **[Process Principle 1]**
-   [Description of Process Principle 1]
+2. **Favor Composition Over Inheritance**
+   When designing component relationships, favor composition patterns over deep inheritance hierarchies. Composition is more flexible and creates fewer coupling issues when systems evolve.
 
-2. **[Process Principle 2]**
-   [Description of Process Principle 2]
+3. **Incremental Implementation**
+   Implement systems incrementally, starting with core functionality and progressively adding features. This allows for earlier testing and validation of the architectural approach.
 
-3. **[Process Principle 3]**
-   [Description of Process Principle 3]
+4. **Make Tradeoffs Explicit**
+   When making design decisions that involve tradeoffs, explicitly document these tradeoffs and the reasoning behind the chosen approach. This helps future developers understand why certain decisions were made.
+
+5. **Design for Testability**
+   Components should be designed to be easily testable in isolation. This typically involves clear boundaries, dependency injection, and minimal side effects.
 
 ### Decision-Making Framework
 

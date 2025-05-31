@@ -15,6 +15,7 @@ This document serves as an index of all key decisions made for the project, prov
 
 | ID | Title | Status | Date | Domain | Summary |
 |----|-------|--------|------|--------|---------|
+| 001 | Modular Agent Interaction Patterns | Accepted | 2025-05-31 | System Architecture | Architectural approach for making agent interaction patterns (flows, networks, delegation) modular and easily switchable, and establishing broader process principles for component design |
 | [Template] | [Decision Title] | [Status] | [Date] | [Domain] | [Brief summary of the decision] |
 
 ### Decision Status Legend
@@ -35,7 +36,7 @@ This document serves as an index of all key decisions made for the project, prov
 - **DevOps**: [List of decision IDs related to DevOps]
 - **Data**: [List of decision IDs related to data]
 - **Security**: [List of decision IDs related to security]
-- **Architecture**: [List of decision IDs related to overall architecture]
+- **Architecture**: 001
 
 <!-- For Research Projects -->
 - **Methodology**: [List of decision IDs related to research methodology]
@@ -57,7 +58,7 @@ This document serves as an index of all key decisions made for the project, prov
 
 #### By Status
 - **Proposed**: [List of decision IDs with proposed status]
-- **Accepted**: [List of decision IDs with accepted status]
+- **Accepted**: 001
 - **Deprecated**: [List of decision IDs with deprecated status]
 - **Superseded**: [List of decision IDs with superseded status]
 

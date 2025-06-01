@@ -2,6 +2,66 @@
 
 This file tracks significant updates to the context network structure and content.
 
+## Context Network Update: Debate Workflow Design - 2025-05-31
+
+### Information Nodes Modified/Created
+- Created `context-network/elements/multi-agent-dialogue/debate_workflow.md`: Comprehensive design document for the debate workflow implementation
+
+### Content Changes
+- Detailed the specialized debate workflow format and features
+- Created sequence diagram for debate turn structure
+- Defined participant roles, scoring mechanisms, and configuration options
+- Provided implementation plan with core components and steps
+- Developed prompt templates for moderators and position advocates
+- Included example code for debate workflow creation and usage
+
+### New Relationships Established
+- `context-network/elements/multi-agent-dialogue/debate_workflow.md` → implements → `context-network/planning/roadmap.md#Specialized Workflows`
+- `context-network/elements/multi-agent-dialogue/debate_workflow.md` → extends → `src/convenings/workflows/dialogue_workflow.ts`
+- `context-network/elements/multi-agent-dialogue/debate_workflow.md` → interacts-with → `elements/multi-agent-dialogue/motivation_system.md`
+
+### Navigation Implications
+- Debate workflow design provides a blueprint for the first specialized workflow implementation
+- Forms the basis for upcoming development work in Phase 3 of the roadmap
+- Serves as a template for other specialized workflow designs (brainstorming, educational, etc.)
+
+### Follow-up Recommendations
+- Begin implementation of the debate workflow interfaces and classes
+- Create test cases for the debate scoring system
+- Develop a simple example application demonstrating the debate workflow
+- Consider how the debate format could leverage the existing bidding system
+- Design specialized motivation types optimized for debate participants
+
+## Context Network Update: Project Definition and Roadmap - 2025-05-31
+
+### Information Nodes Modified
+- Created `context-network/foundation/project_definition.md`: Comprehensive project definition for Convenings
+- Created `context-network/planning/roadmap.md`: Detailed development roadmap with milestones and timeline
+
+### Content Changes
+- Defined clear project vision, mission, objectives, and success criteria
+- Established project scope boundaries and constraints
+- Created detailed 5-phase roadmap with specific milestones through December 2025
+- Identified immediate action items and priorities for Phase 3 (Expansion)
+- Added comprehensive risk assessment and mitigation strategies
+
+### New Relationships Established
+- `context-network/foundation/project_definition.md` → details → `context-network/planning/roadmap.md`
+- `context-network/planning/roadmap.md` → implements → `context-network/foundation/project_definition.md`
+- Both nodes → relates-to → `context-network/elements/multi-agent-dialogue/architecture.md`
+
+### Navigation Implications
+- Project definition and roadmap now serve as primary navigation points for project direction
+- Clear connection established between high-level vision and concrete implementation plans
+- Immediate action items provide clear next steps for development
+
+### Follow-up Recommendations
+- Update milestones.md to align with the new roadmap structure
+- Create detailed specifications for the next workflow implementations (debate, brainstorming)
+- Develop technical specifications for advanced bidding strategies
+- Consider creating a project board or tracking system for the identified action items
+- Begin design documents for the memory and context management system
+
 ## Context Network Update: OpenRouter Integration and Motivated Participants - 2025-05-31
 
 ### Information Nodes Modified/Created

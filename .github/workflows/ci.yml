@@ -16,7 +16,7 @@ jobs:
       - name: Setup Deno
         uses: denoland/setup-deno@v1
         with:
-          deno-version: v1.x
+          deno-version: v1.40.0  # Using a specific version that supports lockfile v5
 
       - name: Cache Deno dependencies
         uses: actions/cache@v3
@@ -49,7 +49,7 @@ jobs:
       - name: Setup Deno
         uses: denoland/setup-deno@v1
         with:
-          deno-version: v1.x
+          deno-version: v1.40.0  # Using a specific version that supports lockfile v5
 
       - name: Cache Deno dependencies
         uses: actions/cache@v3
@@ -83,7 +83,7 @@ jobs:
       - name: Setup Deno
         uses: denoland/setup-deno@v1
         with:
-          deno-version: v1.x
+          deno-version: v1.40.0  # Using a specific version that supports lockfile v5
 
       - name: Cache Deno dependencies
         uses: actions/cache@v3
@@ -142,7 +142,7 @@ jobs:
       - name: Setup Deno
         uses: denoland/setup-deno@v1
         with:
-          deno-version: v1.x
+          deno-version: v1.40.0  # Using a specific version that supports lockfile v5
 
       - name: Generate combined coverage summary
         run: |

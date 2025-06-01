@@ -4,6 +4,7 @@
  */
 
 import { IAgent, IAgentConfig } from "../utils/interfaces.ts";
+import { ILogger, createLogger, LogLevel } from "../convenings/utils/logger.ts";
 
 /**
  * Configuration for OpenRouter client
@@ -48,6 +49,36 @@ export interface OpenRouterConfig {
    * Array of fallback models to try if the primary model fails
    */
   fallbackModels?: string[];
+  
+  /**
+   * Logger instance to use for logging
+   * If not provided, a default logger will be created
+   */
+  logger?: ILogger;
+  
+  /**
+   * Log level to use
+   * Default: LogLevel.INFO
+   */
+  logLevel?: LogLevel;
+  
+  /**
+   * Whether to enable token tracking
+   * Default: true
+   */
+  trackTokens?: boolean;
+  
+  /**
+   * Maximum cost budget in USD
+   * If exceeded, API calls will be rejected
+   */
+  maxCost?: number;
+  
+  /**
+   * Maximum token budget
+   * If exceeded, API calls will be rejected
+   */
+  maxTokens?: number;
 }
 
 /**
@@ -96,6 +127,14 @@ export interface ChatCompletionOptions {
  */
 export class OpenRouterClient {
   private config: OpenRouterConfig;
+  private logger: ILogger;
+  
+  /**
+   * Access to the configured logger
+   */
+  get loggerInstance(): ILogger {
+    return this.logger;
+  }
   
   /**
    * Create a new OpenRouter client
@@ -108,6 +147,8 @@ export class OpenRouterClient {
       timeout: 60000,
       temperature: 0.7,
       maxTokens: 1000,
+      trackTokens: true,
+      logLevel: LogLevel.INFO,
       ...config,
     };
     
@@ -118,6 +159,80 @@ export class OpenRouterClient {
     if (!this.config.defaultModel) {
       throw new Error("Default model is required");
     }
+    
+    // Initialize logger
+    this.logger = config.logger || createLogger(
+      { logLevel: this.config.logLevel },
+      {
+        maxTokens: this.config.maxTokens,
+        maxCost: this.config.maxCost,
+      }
+    );
+    
+    this.logger.info(`OpenRouterClient initialized with model: ${this.config.defaultModel}`);
+  }
+  
+  /**
+   * Estimate input token count (very rough approximation)
+   * 
+   * @param messages - Array of messages
+   * @returns Estimated token count
+   */
+  private estimateTokenCount(messages: ChatMessage[]): number {
+    // Very rough approximation (4 chars ~ 1 token)
+    let totalChars = 0;
+    
+    for (const message of messages) {
+      totalChars += message.content.length;
+      totalChars += message.role.length;
+      totalChars += 10; // Overhead for message formatting
+    }
+    
+    return Math.ceil(totalChars / 4);
+  }
+  
+  /**
+   * Check if proceeding with an API call would exceed budget limits
+   * 
+   * @param model - Model to use
+   * @param estimatedInputTokens - Estimated input token count
+   * @returns Whether the budget would be exceeded
+   */
+  private checkBudgetLimits(model: string, estimatedInputTokens: number): boolean {
+    // Check if budget tracking is enabled
+    if (!this.config.trackTokens) {
+      return false;
+    }
+    
+    // Get current budget status
+    const budgetStatus = this.logger.getBudgetStatus();
+    
+    // If already exceeded, return true
+    if (budgetStatus.exceeded) {
+      this.logger.warn("Budget already exceeded, cannot proceed with API call");
+      return true;
+    }
+    
+    // Estimate the upper bound of what this call might cost
+    // Assume max output tokens as a worst-case scenario
+    const maxOutputTokens = this.config.maxTokens as number;
+    const estimatedCost = this.logger.calculateCost(model, estimatedInputTokens, maxOutputTokens);
+    const worstCaseTotalCost = budgetStatus.currentCost + estimatedCost;
+    
+    // Check if this would exceed cost budget
+    if (budgetStatus.maxCost && worstCaseTotalCost > budgetStatus.maxCost) {
+      this.logger.warn(`API call would exceed cost budget: $${worstCaseTotalCost.toFixed(4)} > $${budgetStatus.maxCost.toFixed(4)}`);
+      return true;
+    }
+    
+    // Check if this would exceed token budget
+    const worstCaseTotalTokens = budgetStatus.currentTokens + estimatedInputTokens + maxOutputTokens;
+    if (budgetStatus.maxTokens && worstCaseTotalTokens > budgetStatus.maxTokens) {
+      this.logger.warn(`API call would exceed token budget: ${worstCaseTotalTokens} > ${budgetStatus.maxTokens}`);
+      return true;
+    }
+    
+    return false;
   }
   
   /**
@@ -135,7 +250,25 @@ export class OpenRouterClient {
     const temperature = options.temperature ?? this.config.temperature;
     const maxTokens = options.maxTokens ?? this.config.maxTokens;
     
+    // Estimate input tokens
+    const estimatedInputTokens = this.estimateTokenCount(messages);
+    
+    this.logger.debug(`Chat completion request`, {
+      model,
+      temperature,
+      maxTokens,
+      messageCount: messages.length,
+      estimatedInputTokens,
+    });
+    
+    // Check budget limits
+    if (this.checkBudgetLimits(model, estimatedInputTokens)) {
+      throw new Error(`Budget limit would be exceeded by this API call`);
+    }
+    
     try {
+      this.logger.startSection(`api_call_${model}`);
+      
       const response = await fetch(`${this.config.baseUrl}/chat/completions`, {
         method: "POST",
         headers: {
@@ -156,10 +289,41 @@ export class OpenRouterClient {
       
       if (!response.ok) {
         const errorText = await response.text();
+        this.logger.error(`OpenRouter API error (${response.status})`, { error: errorText });
         throw new Error(`OpenRouter API error (${response.status}): ${errorText}`);
       }
       
       const data = await response.json();
+      
+      // Get actual token usage from response if available
+      const usage = data.usage || {
+        prompt_tokens: estimatedInputTokens,
+        completion_tokens: Math.ceil(data.choices[0].message.content.length / 4),
+        total_tokens: 0
+      };
+      
+      // Calculate total tokens if not provided
+      if (!usage.total_tokens) {
+        usage.total_tokens = usage.prompt_tokens + usage.completion_tokens;
+      }
+      
+      // Calculate cost
+      const cost = this.logger.calculateCost(model, usage.prompt_tokens, usage.completion_tokens);
+      
+      // Track usage
+      if (this.config.trackTokens) {
+        this.logger.trackApiUsage(model, usage.prompt_tokens, usage.completion_tokens, cost);
+      }
+      
+      this.logger.info(`API call completed`, {
+        model,
+        inputTokens: usage.prompt_tokens,
+        outputTokens: usage.completion_tokens,
+        totalTokens: usage.total_tokens,
+        cost: cost.toFixed(6),
+      });
+      
+      this.logger.endSection(`api_call_${model}`);
       
       return {
         role: "assistant",

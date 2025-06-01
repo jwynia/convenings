@@ -457,7 +457,7 @@ For each criterion, provide:
 - A score from 0-10
 - A brief justification for the score
 
-Format your response as JSON with this structure:
+Important: Your response must be formatted EXACTLY as follows (JSON object only, no other text):
 {
   "logical_coherence": {"score": X, "justification": "..."},
   "evidence_quality": {"score": X, "justification": "..."},
@@ -470,8 +470,12 @@ Format your response as JSON with this structure:
     const response = await this.agent.execute(prompt);
     
     try {
+      // Extract JSON from response (in case model adds surrounding text)
+      const jsonMatch = response.match(/\{[\s\S]*\}/);
+      const jsonString = jsonMatch ? jsonMatch[0] : response;
+      
       // Parse the response as JSON
-      const rawScores = JSON.parse(response);
+      const rawScores = JSON.parse(jsonString);
       
       // Calculate weighted scores
       const breakdown: Record<string, CriterionScore> = {};
@@ -506,13 +510,12 @@ Format your response as JSON with this structure:
       // Return a default score on error
       return {
         total: 5,
-        breakdown: {
-          error: {
-            raw: 5,
-            weighted: 5,
-            justification: "Error processing score",
-          },
-        },
+        breakdown: Object.fromEntries(
+          Object.entries(this.scoringCriteria).map(([key, weight]) => [
+            key,
+            { raw: 5, weighted: 5 * weight, justification: "Score defaulted due to parsing error" },
+          ])
+        ),
       };
     }
   }

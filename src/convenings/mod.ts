@@ -78,6 +78,12 @@ export async function createConsensusDialogue(
   openRouterApiKey: string,
   defaultModel: string = "openai/gpt-4o"
 ) {
+  // Import necessary classes and functions directly
+  const { OpenRouterClient } = await import("../mastra/openrouter_client.ts");
+  const { createOpenRouterAgent } = await import("../mastra/openrouter_client.ts");
+  const { ConsensusWorkflow } = await import("./workflows/consensus_workflow.ts");
+  const { createConsensusSeekingParticipant, createTruthSeekingParticipant } = await import("./participants/motivations/mod.ts");
+  
   // Create OpenRouter client
   const client = new OpenRouterClient({
     apiKey: openRouterApiKey,
@@ -157,6 +163,95 @@ finding common ground and shared understanding.`,
   return consensus.run();
 }
 
+// Export logger
+export * from "./utils/logger.ts";
+
+/**
+ * Configuration for creating a debate
+ */
+export interface CreateDebateOptions {
+  /**
+   * Format of the debate (formal, casual, educational, competitive)
+   * Default: "formal"
+   */
+  debateFormat?: DebateFormat;
+  
+  /**
+   * Number of argument rounds
+   * Default: 2
+   */
+  roundCount?: number;
+  
+  /**
+   * Maximum tokens for opening statements
+   * Default: 300
+   */
+  openingStatementMaxTokens?: number;
+  
+  /**
+   * Maximum tokens for arguments and rebuttals
+   * Default: 250
+   */
+  argumentMaxTokens?: number;
+  
+  /**
+   * Maximum tokens for closing statements
+   * Default: 350
+   */
+  closingStatementMaxTokens?: number;
+  
+  /**
+   * Whether to enable scoring
+   * Default: true
+   */
+  scoringEnabled?: boolean;
+  
+  /**
+   * Whether to include moderator summaries after each round
+   * Default: true
+   */
+  roundSummariesEnabled?: boolean;
+  
+  /**
+   * Maximum budget in USD
+   */
+  maxCost?: number;
+  
+  /**
+   * Maximum tokens to use
+   */
+  maxTokens?: number;
+  
+  /**
+   * Path to save debate transcript and results
+   */
+  outputFilePath?: string;
+  
+  /**
+   * Format to save debate output in
+   * Default: "json"
+   */
+  outputFormat?: "json" | "md" | "txt";
+  
+  /**
+   * Whether to show debug logs
+   * Default: false
+   */
+  debug?: boolean;
+  
+  /**
+   * Whether to show progress in the console
+   * Default: true
+   */
+  showProgress?: boolean;
+  
+  /**
+   * Temperature for the model (0.0-1.0)
+   * Default: 0.7
+   */
+  temperature?: number;
+}
+
 /**
  * Create a debate on a given topic with opposing positions
  * 
@@ -165,7 +260,7 @@ finding common ground and shared understanding.`,
  * @param positionB - Second position to advocate
  * @param openRouterApiKey - OpenRouter API key
  * @param defaultModel - Default model to use (e.g., "openai/gpt-4o")
- * @param debateFormat - Format of the debate (formal, casual, educational, competitive)
+ * @param options - Additional options for the debate
  * @returns Promise resolving to the debate result
  */
 export async function createDebate(
@@ -174,14 +269,28 @@ export async function createDebate(
   positionB: string,
   openRouterApiKey: string,
   defaultModel: string = "openai/gpt-4o",
-  debateFormat: DebateFormat = "formal"
+  options: CreateDebateOptions = {}
 ) {
+  // Import necessary classes and functions directly
+  const { OpenRouterClient } = await import("../mastra/openrouter_client.ts");
+  const { createOpenRouterAgent } = await import("../mastra/openrouter_client.ts");
+  const { createDebateParticipant, createDebateModerator } = await import("./participants/debate_participant.ts");
+  const { DebateWorkflow } = await import("./workflows/debate_workflow.ts");
+  const { LogLevel } = await import("./utils/logger.ts");
+  
+  const debateFormat = options.debateFormat || "formal";
+  const temperature = options.temperature || 0.7;
+  
   // Create OpenRouter client
   const client = new OpenRouterClient({
     apiKey: openRouterApiKey,
     defaultModel,
-    temperature: 0.7,
-    fallbackModels: ["anthropic/claude-3-opus", "anthropic/claude-3-sonnet"]
+    temperature,
+    fallbackModels: ["anthropic/claude-3-opus", "anthropic/claude-3-sonnet"],
+    trackTokens: true,
+    logLevel: options.debug ? LogLevel.DEBUG : LogLevel.INFO,
+    maxCost: options.maxCost,
+    maxTokens: options.maxTokens
   });
   
   // Create participants for the debate
@@ -256,10 +365,22 @@ credible evidence, and addressing counterarguments effectively.`,
   // Create debate workflow with the participants
   const debate = new DebateWorkflow(topic, participants, {
     debateFormat,
-    roundCount: 2,
+    roundCount: options.roundCount || 2,
     maxTurns: 30,
-    scoringEnabled: true,
-    roundSummariesEnabled: true,
+    scoringEnabled: options.scoringEnabled !== false,
+    roundSummariesEnabled: options.roundSummariesEnabled !== false,
+    openingStatementMaxTokens: options.openingStatementMaxTokens,
+    argumentMaxTokens: options.argumentMaxTokens,
+    closingStatementMaxTokens: options.closingStatementMaxTokens,
+    outputFilePath: options.outputFilePath,
+    outputFormat: options.outputFormat,
+    debug: options.debug,
+    showProgress: options.showProgress !== false,
+    budget: {
+      maxTokens: options.maxTokens,
+      maxCost: options.maxCost,
+      warningThreshold: 0.8,
+    },
     debatePromptTemplate: `This is a structured ${debateFormat} debate on ${topic}.
 The debate follows a formal structure with opening statements,
 argument rounds with rebuttals, and closing statements.

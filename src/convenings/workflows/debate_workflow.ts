@@ -3,6 +3,8 @@
  * Specialized workflow for structured debates
  */
 
+import { dirname } from "https://deno.land/std@0.171.0/path/mod.ts";
+
 import { 
   DialogueWorkflow, 
   DialogueParticipant, 
@@ -19,6 +21,14 @@ import {
   DebateFormat,
   ParticipantScore
 } from "../participants/debate_participant.ts";
+
+import {
+  ILogger,
+  createLogger,
+  LogLevel,
+  BudgetConfig,
+  Logger
+} from "../utils/logger.ts";
 
 /**
  * Debate phase
@@ -86,6 +96,60 @@ export interface DebateWorkflowConfig extends DialogueWorkflowConfig {
    * System prompt template for debates
    */
   debatePromptTemplate?: string;
+  
+  /**
+   * Logger instance to use for logging
+   * If not provided, a default logger will be created
+   */
+  logger?: ILogger;
+  
+  /**
+   * Log level to use
+   * Default: LogLevel.INFO
+   */
+  logLevel?: LogLevel;
+  
+  /**
+   * Whether to enable debug logging
+   * Default: false
+   */
+  debug?: boolean;
+  
+  /**
+   * Budget configuration for the debate
+   */
+  budget?: BudgetConfig;
+  
+  /**
+   * Path to save debate transcript and results
+   * If provided, the debate will be saved to this file
+   */
+  outputFilePath?: string;
+  
+  /**
+   * Format to save debate output in
+   * Default: "json"
+   */
+  outputFormat?: "json" | "md" | "txt";
+  
+  /**
+   * Whether to allow an early exit based on budget constraints
+   * Default: true
+   */
+  allowBudgetEarlyExit?: boolean;
+  
+  /**
+   * Whether to display progress in the console
+   * Default: true
+   */
+  showProgress?: boolean;
+  
+  /**
+   * Whether to generate a full transcript file
+   * When false, only individual message files and an index file are created
+   * Default: false
+   */
+  generateFullTranscript?: boolean;
 }
 
 /**
@@ -137,6 +201,10 @@ export class DebateWorkflow extends DialogueWorkflow {
   private scores: Map<string, ParticipantScore> = new Map();
   private phaseTurnOrder: string[] = [];
   private debateSummary: string = "";
+  private logger: ILogger;
+  private startTime: number = 0;
+  private phaseStartTime: number = 0;
+  private earlyExitReason?: string;
   
   /**
    * Create a new debate workflow
@@ -166,6 +234,17 @@ export class DebateWorkflow extends DialogueWorkflow {
       exitCondition: (state: DialogueState) => this.checkDebateComplete(state),
     });
     
+    // Initialize logger
+    const logLevel = config.debug ? LogLevel.DEBUG : (config.logLevel ?? LogLevel.INFO);
+    this.logger = config.logger ?? createLogger(
+      {
+        logLevel,
+        consoleOutput: config.showProgress ?? true,
+        logFilePath: config.outputFilePath,
+      },
+      config.budget
+    );
+    
     // Store debate-specific configuration with defaults
     this.debateConfig = {
       debateFormat: config.debateFormat ?? "formal",
@@ -183,8 +262,25 @@ export class DebateWorkflow extends DialogueWorkflow {
       },
       roundSummariesEnabled: config.roundSummariesEnabled ?? true,
       debatePromptTemplate,
+      logger: this.logger,
+      logLevel,
+      debug: config.debug ?? false,
+      budget: config.budget,
+      outputFilePath: config.outputFilePath,
+      outputFormat: config.outputFormat ?? "json",
+      allowBudgetEarlyExit: config.allowBudgetEarlyExit ?? true,
+      showProgress: config.showProgress ?? true,
+      generateFullTranscript: config.generateFullTranscript ?? false,
       ...config as Required<DialogueWorkflowConfig>,
     };
+    
+    // Log initialization
+    this.logger.info(`Initialized debate workflow on topic: "${topic}"`, {
+      debateFormat: this.debateConfig.debateFormat,
+      roundCount: this.debateConfig.roundCount,
+      participantCount: participants.length,
+      advocateCount: participants.filter(p => p instanceof DebateParticipant && p.debateRole === "position_advocate").length,
+    });
     
     // Initialize debate-specific state
     this.initializeDebateState();
@@ -196,18 +292,282 @@ export class DebateWorkflow extends DialogueWorkflow {
    * @returns Result of the debate
    */
   async run(): Promise<DebateWorkflowResult> {
-    // Run the dialogue using the base implementation
-    const baseResult = await super.run();
+    // Start timing
+    this.startTime = Date.now();
+    this.phaseStartTime = Date.now();
     
-    // Return debate-specific result
-    return {
-      ...baseResult,
-      scores: Object.fromEntries(this.scores),
-      summary: this.debateSummary,
-      debateCompleted: this.currentPhase === DebatePhase.COMPLETE,
-      totalTurns: this.state.currentTurn,
-      completedRounds: this.currentRound,
-    };
+    this.logger.info(`Starting debate on topic: "${this.state.topic}"`);
+    this.logger.info(`Format: ${this.debateConfig.debateFormat}, Rounds: ${this.debateConfig.roundCount}`);
+    
+    try {
+      // Run the dialogue using the base implementation
+      const baseResult = await super.run();
+      
+      // Calculate duration
+      const duration = Date.now() - this.startTime;
+      
+      // Prepare the debate result
+      const result: DebateWorkflowResult = {
+        ...baseResult,
+        scores: Object.fromEntries(this.scores),
+        summary: this.debateSummary,
+        debateCompleted: this.currentPhase === DebatePhase.COMPLETE,
+        totalTurns: this.state.currentTurn,
+        completedRounds: this.currentRound,
+      };
+      
+      // Log completion
+      this.logger.info(`Debate completed in ${(duration / 1000).toFixed(2)} seconds`, {
+        totalTurns: this.state.currentTurn,
+        completedRounds: this.currentRound,
+        debateCompleted: this.currentPhase === DebatePhase.COMPLETE,
+        earlyExitReason: this.earlyExitReason,
+      });
+      
+      // Get API usage metrics from both the logger and any OpenRouter clients
+      const loggerUsage = this.logger.getApiUsageMetrics();
+      
+      // Extract OpenRouter clients from participants if they exist
+      const openRouterMetrics = this.state.participants
+        .filter(p => p.agent && 'client' in p.agent)
+        .map(p => {
+          const client = (p.agent as any).client;
+          return client && client.getApiUsageMetrics ? client.getApiUsageMetrics() : null;
+        })
+        .filter(Boolean);
+      
+      // Combine metrics
+      const apiUsage = {
+        totalCalls: loggerUsage.totalCalls,
+        inputTokens: loggerUsage.inputTokens,
+        outputTokens: loggerUsage.outputTokens,
+        totalTokens: loggerUsage.totalTokens,
+        estimatedCost: loggerUsage.estimatedCost,
+        byModel: { ...loggerUsage.byModel }
+      };
+      
+      // Add metrics from OpenRouter clients
+      for (const metrics of openRouterMetrics) {
+        apiUsage.totalCalls += metrics.totalCalls;
+        apiUsage.inputTokens += metrics.inputTokens;
+        apiUsage.outputTokens += metrics.outputTokens;
+        apiUsage.totalTokens += metrics.totalTokens;
+        apiUsage.estimatedCost += metrics.estimatedCost;
+        
+        // Merge byModel data
+        for (const [model, usage] of Object.entries(metrics.byModel)) {
+          if (apiUsage.byModel[model]) {
+            apiUsage.byModel[model].calls += usage.calls;
+            apiUsage.byModel[model].inputTokens += usage.inputTokens;
+            apiUsage.byModel[model].outputTokens += usage.outputTokens;
+            apiUsage.byModel[model].totalTokens += usage.totalTokens;
+            apiUsage.byModel[model].estimatedCost += usage.estimatedCost;
+          } else {
+            apiUsage.byModel[model] = { ...usage };
+          }
+        }
+      }
+      
+      this.logger.info(`API usage summary:`, {
+        totalTokens: apiUsage.totalTokens,
+        totalCost: `$${apiUsage.estimatedCost.toFixed(4)}`,
+        totalCalls: apiUsage.totalCalls,
+      });
+      
+      // Save results if output path is configured
+      if (this.debateConfig.outputFilePath) {
+        // Try to determine the script path from stack trace
+        let scriptPath: string | undefined = undefined;
+        try {
+          // Create an error to get a stack trace
+          const err = new Error();
+          // Parse the stack trace to find the user script that called this method
+          const stackLines = err.stack?.split('\n') || [];
+          for (const line of stackLines) {
+            // Look for user script paths like examples/debate_example.ts
+            if (line.includes('.ts') && !line.includes('src/convenings/') && !line.includes('node_modules')) {
+              // Extract potential script path
+              const match = line.match(/([a-zA-Z0-9_\-\/]+\.ts)/);
+              if (match && match[1]) {
+                scriptPath = match[1];
+                this.logger.debug(`Detected script path from stack trace: ${scriptPath}`);
+                break;
+              }
+            }
+          }
+        } catch (e) {
+          // If we can't determine the script path, just continue without it
+          this.logger.debug("Could not determine script path from stack trace", e);
+        }
+        
+        // Create output directory with timestamp
+        const outputDir = this.logger instanceof Logger ? 
+          (this.logger as Logger).createOutputDirectory(dirname(this.debateConfig.outputFilePath), "debate", scriptPath) :
+          this.debateConfig.outputFilePath;
+        
+        const resultWithApiUsage = {
+          ...result,
+          apiUsage,
+          duration,
+          timestamp: new Date().toISOString(),
+        };
+        
+        // Save metadata
+        const metadataPath = `${outputDir}/metadata.${this.debateConfig.outputFormat || 'json'}`;
+        this.logger.info(`Saving debate metadata to ${metadataPath}`);
+        await this.logger.saveToFile(
+          {
+            topic: this.state.topic,
+            format: this.debateConfig.debateFormat,
+            roundCount: this.debateConfig.roundCount,
+            completedRounds: this.currentRound,
+            totalTurns: this.state.currentTurn,
+            scores: Object.fromEntries(this.scores),
+            apiUsage,
+            duration,
+            timestamp: new Date().toISOString(),
+          }, 
+          metadataPath,
+          this.debateConfig.outputFormat
+        );
+        
+        // Save summary
+        const summaryPath = `${outputDir}/summary.${this.debateConfig.outputFormat || 'md'}`;
+        this.logger.info(`Saving debate summary to ${summaryPath}`);
+        await this.logger.saveToFile(
+          {
+            topic: this.state.topic,
+            summary: this.debateSummary,
+            scores: Object.fromEntries(this.scores),
+          },
+          summaryPath,
+          this.debateConfig.outputFormat
+        );
+        
+        // Save individual messages
+        this.logger.info(`Saving ${this.state.messages.length} messages to ${outputDir}/messages/`);
+        let messageNum = 1;
+        const messageFiles = [];
+        
+        for (const message of this.state.messages) {
+          const participant = this.state.participants.find(p => p.id === message.participantId);
+          const role = participant instanceof DebateParticipant ? 
+            participant.debateRole : 
+            (participant?.id === this.moderator?.id ? "moderator" : "participant");
+          
+          const paddedNum = messageNum.toString().padStart(3, '0');
+          const fileName = `${paddedNum}_${role}_${message.participantId.slice(0, 8)}.${this.debateConfig.outputFormat || 'md'}`;
+          
+          await this.logger.saveToFile(
+            {
+              participantId: message.participantId,
+              role,
+              turnNumber: message.metadata?.turnNumber,
+              debatePhase: message.metadata?.debatePhase,
+              roundNumber: message.metadata?.roundNumber,
+              content: message.content,
+              timestamp: new Date(message.timestamp).toISOString(),
+            },
+            `${outputDir}/messages/${fileName}`,
+            this.debateConfig.outputFormat
+          );
+          
+          // Store message file info for the index
+          messageFiles.push({
+            fileName,
+            participantId: message.participantId,
+            role,
+            turnNumber: message.metadata?.turnNumber,
+            debatePhase: message.metadata?.debatePhase,
+            roundNumber: message.metadata?.roundNumber,
+            timestamp: new Date(message.timestamp).toISOString(),
+          });
+          
+          messageNum++;
+        }
+        
+        // Create an index file that references all the individual message files
+        const indexPath = `${outputDir}/index.${this.debateConfig.outputFormat || 'md'}`;
+        this.logger.info(`Creating debate index at ${indexPath}`);
+        
+        // Prepare index content based on format
+        let indexContent;
+        if (this.debateConfig.outputFormat === 'json') {
+          indexContent = {
+            topic: this.state.topic,
+            format: this.debateConfig.debateFormat,
+            roundCount: this.debateConfig.roundCount,
+            completedRounds: this.currentRound,
+            totalTurns: this.state.currentTurn,
+            timestamp: new Date().toISOString(),
+            scores: Object.fromEntries(this.scores),
+            summary: this.debateSummary,
+            apiUsage,
+            duration,
+            messages: messageFiles,
+          };
+        } else {
+          // For md or txt formats, create a more readable index
+          const participantNames = this.state.participants.map(p => {
+            if (p instanceof DebateParticipant) {
+              return `${p.debateRole}: ${p.id.slice(0, 8)}`;
+            }
+            return p.id.slice(0, 8);
+          }).join(', ');
+          
+          indexContent = {
+            title: `Debate Index: ${this.state.topic}`,
+            metadata: {
+              topic: this.state.topic,
+              format: this.debateConfig.debateFormat,
+              participants: participantNames,
+              completedRounds: `${this.currentRound}/${this.debateConfig.roundCount}`,
+              totalTurns: this.state.currentTurn,
+              timestamp: new Date().toISOString(),
+              apiUsage: {
+                totalTokens: apiUsage.totalTokens,
+                estimatedCost: `$${apiUsage.estimatedCost.toFixed(4)}`,
+              },
+            },
+            summary: this.debateSummary,
+            messages: messageFiles.map((m, i) => ({
+              number: i + 1,
+              file: m.fileName,
+              role: m.role,
+              phase: m.debatePhase,
+              round: m.roundNumber,
+            })),
+          };
+        }
+        
+        await this.logger.saveToFile(
+          indexContent,
+          indexPath,
+          this.debateConfig.outputFormat
+        );
+        
+        // Conditionally save the full transcript based on configuration
+        if (this.debateConfig.generateFullTranscript) {
+          const transcriptPath = `${outputDir}/transcript.${this.debateConfig.outputFormat || 'md'}`;
+          this.logger.info(`Saving full transcript to ${transcriptPath}`);
+          await this.logger.saveToFile(
+            resultWithApiUsage, 
+            transcriptPath,
+            this.debateConfig.outputFormat
+          );
+        }
+      }
+      
+      return result;
+    } catch (error) {
+      this.logger.error(`Error running debate: ${error.message}`, {
+        error: error.stack,
+        phase: this.currentPhase,
+        turn: this.state.currentTurn,
+      });
+      
+      throw error;
+    }
   }
   
   /**

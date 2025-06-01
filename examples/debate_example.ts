@@ -42,7 +42,14 @@ async function runSimpleDebate() {
     positionB,
     apiKey,
     "anthropic/claude-3-sonnet",
-    "educational"
+    {
+      debateFormat: "educational",
+      roundCount: 2,
+      showProgress: true,
+      outputFilePath: "./debate-output.md",
+      outputFormat: "md",
+      maxCost: 0.5, // Set a $0.50 budget limit
+    }
   );
   
   // Display results

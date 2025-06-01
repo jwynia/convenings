@@ -2,6 +2,34 @@
 
 This file tracks significant updates to the context network structure and content.
 
+## Context Network Update: LLM-Friendly Debate Output Structure - 2025-06-01
+
+### Information Nodes Modified
+- Updated `context-network/elements/multi-agent-dialogue/debate_workflow.md`: Added documentation for the new LLM-friendly output structure with index-based organization
+- Updated `src/convenings/workflows/debate_workflow.ts`: Implemented index-based output structure with optional transcript generation
+
+### Implementation Changes
+- Added new `generateFullTranscript` configuration option to `DebateWorkflowConfig` (defaults to false)
+- Modified output generation to create an index file with metadata and references to individual message files
+- Made full transcript generation conditional on the `generateFullTranscript` option
+- Enhanced message file storage to track metadata for the index
+
+### Key Features Implemented
+- LLM-friendly output structure that prevents context window issues with large debates
+- Index file with comprehensive metadata and references to all message files
+- Structured organization of debate outputs with separate metadata, summary, and message files
+- Backward compatibility through optional full transcript generation
+
+### Navigation Implications
+- Debate outputs are now more accessible to LLMs with limited context windows
+- Individual messages can be accessed directly without loading the entire transcript
+- Index file provides a lightweight way to understand the debate structure
+
+### Follow-up Recommendations
+- Consider applying the same index-based pattern to other workflow types
+- Add specialized tools for navigating and analyzing debate output directories
+- Evaluate performance impact on very large debates with hundreds of turns
+
 ## Context Network Update: Debate Workflow Implementation - 2025-06-01
 
 ### Information Nodes Modified/Created

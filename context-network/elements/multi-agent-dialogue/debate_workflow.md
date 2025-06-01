@@ -52,6 +52,7 @@ sequenceDiagram
    - Multiple rounds of arguments and rebuttals
    - Closing statements
    - Moderator summaries and scoring
+   - Index-based output organization for LLM-friendly consumption
 
 2. **Specialized Participant Roles**:
    - Moderator: Guides the debate, enforces rules, summarizes positions
@@ -69,11 +70,35 @@ sequenceDiagram
    - Responsiveness to opposing arguments
    - Persuasiveness and clarity
 
-5. **Debate Configurations**:
+5. **Output Management**:
+   - Individual message files to prevent context window issues
+   - Index file with metadata and message references
+   - Optional full transcript file generation
+   - Flexible output formats (JSON, Markdown, Text)
+
+6. **Debate Configurations**:
    - Formal debate: Strict rules, formal language, explicit scoring
    - Casual debate: More flexible structure, conversational tone
    - Educational debate: Focus on learning and exploration of multiple perspectives
    - Competitive debate: Emphasis on persuasion and winning arguments
+
+### Output Structure
+
+The debate workflow generates the following output structure in timestamp-named directories:
+
+```
+YYYY-MM-DD/YYYY-MM-DDT00-00-00_debate/
+├── index.md              # Main index file with metadata and message references
+├── metadata.md           # Debate metadata (config, stats, etc.)
+├── summary.md            # Final debate summary
+├── messages/             # Individual message files
+│   ├── 001_moderator_12345678.md
+│   ├── 002_position_advocate_87654321.md
+│   └── ...
+└── transcript.md         # (Optional) Full transcript file
+```
+
+This structure ensures that even large debates with many turns remain accessible to LLMs with limited context windows, as each message can be accessed individually rather than requiring loading a potentially large transcript file.
 
 ### Implementation Plan
 
@@ -98,6 +123,7 @@ sequenceDiagram
    - Configuration options for debate format and rules
    - Scoring criteria and weightings
    - Round structure and timing parameters
+   - Output configuration including optional transcript generation
 
 #### Implementation Steps
 
@@ -229,6 +255,7 @@ const debate = createDebateWorkflow(
     argumentMaxTokens: 250,
     closingStatementMaxTokens: 350,
     scoringEnabled: true,
+    generateFullTranscript: false, // Default is false - only create index and individual files
   }
 );
 
@@ -265,8 +292,9 @@ console.log("\nModerator Summary:", result.summary);
 
 ## Metadata
 - **Created:** 2025-05-31
-- **Last Updated:** 2025-05-31
+- **Last Updated:** 2025-06-01
 - **Updated By:** Cline
 
 ## Change History
 - 2025-05-31: Initial creation of debate workflow design document
+- 2025-06-01: Added LLM-friendly output structure with index-based organization and optional transcript generation

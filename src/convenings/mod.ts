@@ -156,3 +156,117 @@ finding common ground and shared understanding.`,
   // Run the consensus dialogue
   return consensus.run();
 }
+
+/**
+ * Create a debate on a given topic with opposing positions
+ * 
+ * @param topic - Topic for the debate
+ * @param positionA - First position to advocate
+ * @param positionB - Second position to advocate
+ * @param openRouterApiKey - OpenRouter API key
+ * @param defaultModel - Default model to use (e.g., "openai/gpt-4o")
+ * @param debateFormat - Format of the debate (formal, casual, educational, competitive)
+ * @returns Promise resolving to the debate result
+ */
+export async function createDebate(
+  topic: string,
+  positionA: string,
+  positionB: string,
+  openRouterApiKey: string,
+  defaultModel: string = "openai/gpt-4o",
+  debateFormat: DebateFormat = "formal"
+) {
+  // Create OpenRouter client
+  const client = new OpenRouterClient({
+    apiKey: openRouterApiKey,
+    defaultModel,
+    temperature: 0.7,
+    fallbackModels: ["anthropic/claude-3-opus", "anthropic/claude-3-sonnet"]
+  });
+  
+  // Create participants for the debate
+  const participants = [
+    // Moderator
+    createDebateModerator({
+      name: "Moderator",
+      agentConfig: {
+        id: "moderator",
+        systemPrompt: `You are a neutral moderator for a debate on ${topic}.
+Your role is to ensure the debate progresses according to structure and rules,
+while remaining neutral on the topic. Guide participants through each phase
+of the debate, provide summaries after each round, and evaluate arguments
+based on logic, evidence, clarity, and responsiveness.`,
+      },
+      dialogueStyle: "analytical",
+      preferredFormat: debateFormat
+    }, createOpenRouterAgent({
+      id: "moderator",
+      systemPrompt: `You are a neutral moderator for a debate on ${topic}.
+Your role is to ensure the debate progresses according to structure and rules,
+while remaining neutral on the topic. Guide participants through each phase
+of the debate, provide summaries after each round, and evaluate arguments
+based on logic, evidence, clarity, and responsiveness.`,
+    }, client)),
+    
+    // Position A Advocate
+    createDebateParticipant({
+      name: "Advocate A",
+      debateRole: "position_advocate",
+      position: positionA,
+      agentConfig: {
+        id: "advocate_a",
+        systemPrompt: `You are participating in a structured debate on ${topic}.
+You are advocating for the position: "${positionA}".
+Present persuasive arguments supporting your position using clear logic,
+credible evidence, and addressing counterarguments effectively.`,
+      },
+      dialogueStyle: "assertive",
+      preferredFormat: debateFormat
+    }, createOpenRouterAgent({
+      id: "advocate_a",
+      systemPrompt: `You are participating in a structured debate on ${topic}.
+You are advocating for the position: "${positionA}".
+Present persuasive arguments supporting your position using clear logic,
+credible evidence, and addressing counterarguments effectively.`,
+    }, client)),
+    
+    // Position B Advocate
+    createDebateParticipant({
+      name: "Advocate B",
+      debateRole: "position_advocate",
+      position: positionB,
+      agentConfig: {
+        id: "advocate_b",
+        systemPrompt: `You are participating in a structured debate on ${topic}.
+You are advocating for the position: "${positionB}".
+Present persuasive arguments supporting your position using clear logic,
+credible evidence, and addressing counterarguments effectively.`,
+      },
+      dialogueStyle: "assertive",
+      preferredFormat: debateFormat
+    }, createOpenRouterAgent({
+      id: "advocate_b",
+      systemPrompt: `You are participating in a structured debate on ${topic}.
+You are advocating for the position: "${positionB}".
+Present persuasive arguments supporting your position using clear logic,
+credible evidence, and addressing counterarguments effectively.`,
+    }, client)),
+  ];
+  
+  // Create debate workflow with the participants
+  const debate = new DebateWorkflow(topic, participants, {
+    debateFormat,
+    roundCount: 2,
+    maxTurns: 30,
+    scoringEnabled: true,
+    roundSummariesEnabled: true,
+    debatePromptTemplate: `This is a structured ${debateFormat} debate on ${topic}.
+The debate follows a formal structure with opening statements,
+argument rounds with rebuttals, and closing statements.
+Each participant should present their position clearly, support it with
+evidence and reasoning, and respond directly to opposing arguments.`,
+  });
+  
+  // Run the debate
+  return debate.run();
+}

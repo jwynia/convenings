@@ -15,6 +15,9 @@
 	// Use 'forwardPorts' to make a list of ports inside the container available locally.
 	// "forwardPorts": [],
 
+	// Load environment variables from .env file
+	"runArgs": ["--env-file", ".devcontainer/.env"],
+
 	// Configure tool-specific properties.
 	"customizations": {
 		"vscode": {
@@ -23,7 +26,13 @@
 				"saoudrizwan.claude-dev"
 			]
 		}
-	}
+	},
+
+	// Mount the .env file if it exists at startup
+	"mounts": [
+		"source=${localWorkspaceFolder}/.devcontainer/.env,target=/workspaces/convenings/.devcontainer/.env,type=bind,consistency=cached"
+	],
+
 	// Uncomment to connect as root instead. More info: https://aka.ms/dev-containers-non-root.
 	// "remoteUser": "root"
 }

@@ -19,5 +19,18 @@ export {
   type MotivatedDialogueParticipantConfig
 } from "./motivated_dialogue_participant.ts";
 
+// Export debate participant
+export {
+  DebateParticipant,
+  DebateModeratorParticipant,
+  createDebateParticipant,
+  createDebateModerator,
+  type DebateRole,
+  type DebateFormat,
+  type DebateParticipantConfig,
+  type CriterionScore,
+  type ParticipantScore
+} from "./debate_participant.ts";
+
 // Export bidding strategies
 export * from "./bidding/mod.ts";

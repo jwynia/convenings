@@ -98,6 +98,24 @@ Facilitators manage the flow of dialogue in a convening, ensuring that participa
 
 - [Deno](https://deno.land/) v1.34 or higher
 
+### Environment Setup
+
+The project uses environment variables for configuration, particularly for API keys when working with external LLM providers.
+
+1. Copy the example environment file:
+   ```bash
+   cp .devcontainer/.env.example .devcontainer/.env
+   ```
+
+2. Edit `.devcontainer/.env` and add your API keys:
+   ```
+   OPENROUTER_API_KEY=your_openrouter_api_key_here
+   ```
+
+3. If using VS Code with the Dev Container extension, the environment variables will be automatically loaded when you open the project in a container.
+
+> **Note**: The examples using OpenRouter (like the debate workflow) require a valid OPENROUTER_API_KEY to be set.
+
 ### Running Tests
 
 ```bash

@@ -23,6 +23,15 @@ export {
   type ConsensusWorkflowResult
 } from "./consensus_workflow.ts";
 
+// Export debate workflow
+export {
+  DebateWorkflow,
+  createDebateWorkflow,
+  DebatePhase,
+  type DebateWorkflowConfig,
+  type DebateWorkflowResult
+} from "./debate_workflow.ts";
+
 // Export OpenRouter dialogue workflow
 export {
   createOpenRouterDialogueWorkflow,

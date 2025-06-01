@@ -20,6 +20,7 @@ This document serves as an index of all key decisions made for the project, prov
 | 003 | Convenings Naming Convention | Accepted | 2025-05-31 | Architecture, API Design | Renaming interfaces and classes to align with the "Convenings" metaphor and hide implementation details |
 | 004 | Code Coverage Implementation | Accepted | 2025-05-31 | Testing, Quality Assurance | Implementation of code coverage tracking and reporting using Deno's built-in tools |
 | 005 | Integration Testing Implementation | Proposed | 2025-05-31 | Testing, Quality Assurance | Strategy for implementing integration tests without invoking external LLM APIs |
+| 006 | Advanced Bidding Strategies Implementation | Accepted | 2025-06-01 | System Architecture, Agent Behavior | Implementation of advanced bidding strategies including contextual relevance, emotion-influenced bidding, coalition bidding, interruptions, and question responding |
 | [Template] | [Decision Title] | [Status] | [Date] | [Domain] | [Brief summary of the decision] |
 
 ### Decision Status Legend
@@ -40,7 +41,7 @@ This document serves as an index of all key decisions made for the project, prov
 - **DevOps**: [List of decision IDs related to DevOps]
 - **Data**: [List of decision IDs related to data]
 - **Security**: [List of decision IDs related to security]
-- **Architecture**: 001, 002, 003
+- **Architecture**: 001, 002, 003, 006
 - **Testing**: 002, 004, 005
 - **API Design**: 003
 - **Quality Assurance**: 004, 005
@@ -65,7 +66,7 @@ This document serves as an index of all key decisions made for the project, prov
 
 #### By Status
 - **Proposed**: 002, 005
-- **Accepted**: 001, 003, 004
+- **Accepted**: 001, 003, 004, 006
 - **Deprecated**: [List of decision IDs with deprecated status]
 - **Superseded**: [List of decision IDs with superseded status]
 
@@ -98,3 +99,4 @@ This document serves as an index of all key decisions made for the project, prov
 - 2025-05-31: Added Decision 003 - Convenings Naming Convention
 - 2025-05-31: Added Decision 004 - Code Coverage Implementation
 - 2025-05-31: Added Decision 005 - Integration Testing Implementation
+- 2025-06-01: Added Decision 006 - Advanced Bidding Strategies Implementation

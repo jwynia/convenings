@@ -2,6 +2,87 @@
 
 This file tracks significant updates to the context network structure and content.
 
+## Context Network Update: Advanced Bidding Example Implementation - 2025-06-01
+
+### Information Nodes Modified/Created
+- Updated `context-network/decisions/advanced_bidding_strategies_implementation.md`: Added example implementation details
+- Created `examples/advanced_bidding_example.ts`: Example demonstrating different advanced bidding strategies
+
+### Implementation Changes
+- Fixed syntax errors in `src/convenings/participants/bidding/advanced_bidding_strategy.ts`: Completed the CoalitionBiddingStrategy implementation
+- Created a comprehensive example that demonstrates:
+  - Creating participants with different bidding strategies
+  - Running a dialogue with these participants
+  - Analyzing turn distribution to evaluate bidding strategy effectiveness
+- Implemented a clean, mock-based approach for testing bidding strategies without requiring actual LLM calls
+
+### New Relationships Established
+- `examples/advanced_bidding_example.ts` → demonstrates → `src/convenings/participants/bidding/advanced_bidding_strategy.ts`
+- `examples/advanced_bidding_example.ts` → demonstrates → `src/convenings/participants/bidding/advanced_bidding_factory.ts`
+- `examples/advanced_bidding_example.ts` → demonstrates → `src/convenings/workflows/dialogue_workflow.ts`
+
+### Key Features Demonstrated
+- Creating participants with different bidding strategies:
+  - Moderator with interruption-focused bidding
+  - Debate-oriented participant with argument-focused bidding
+  - Consensus-building participant with agreement-focused bidding
+  - Brainstorming-oriented participant with idea-generation-focused bidding
+  - Custom participant with tailored bidding configuration
+- Running a dialogue with these participants to show bidding strategy effects
+- Analyzing turn distribution to evaluate bidding strategy effectiveness
+
+### Navigation Implications
+- The example provides a clear reference implementation for using advanced bidding strategies
+- Demonstrates how to configure and combine different bidding strategies
+- Shows how to analyze the impact of bidding strategies on conversation dynamics
+
+### Follow-up Recommendations
+- Create integration tests based on this example pattern
+- Develop a visualization tool for bidding behavior during dialogues
+- Implement more sophisticated coalition formation mechanisms
+- Create specialized bidding strategies for specific dialogue types
+- Add monitoring tools to track bidding patterns in real dialogues
+
+## Context Network Update: Advanced Bidding Strategies Implementation - 2025-06-01
+
+### Information Nodes Modified/Created
+- Created `context-network/decisions/advanced_bidding_strategies_implementation.md`: Decision record for advanced bidding strategies
+- Updated `context-network/decisions/decision_index.md`: Added entry for the Advanced Bidding Strategies Implementation decision
+
+### Implementation Changes
+- Created `src/convenings/participants/bidding/advanced_bidding_strategy.ts`: Implemented contextual and emotional bidding strategies
+- Created `src/convenings/participants/bidding/coalition_bidding_strategy.ts`: Implemented coalition-based bidding strategies
+- Created `src/convenings/participants/bidding/interruption_bidding_strategy.ts`: Implemented interruption and question-responding strategies
+- Created `src/convenings/participants/bidding/advanced_bidding_factory.ts`: Factory for creating and combining advanced strategies
+- Updated `src/convenings/participants/bidding/mod.ts`: Added exports for all new bidding strategies
+
+### New Relationships Established
+- `context-network/decisions/advanced_bidding_strategies_implementation.md` → implements → `context-network/planning/roadmap.md`
+- `src/convenings/participants/bidding/advanced_bidding_strategy.ts` → extends → `src/convenings/participants/bidding/bidding_strategy.ts`
+- `src/convenings/participants/bidding/coalition_bidding_strategy.ts` → implements → `src/convenings/participants/bidding/bidding_strategy.ts#IBiddingStrategy`
+- `src/convenings/participants/bidding/interruption_bidding_strategy.ts` → implements → `src/convenings/participants/bidding/bidding_strategy.ts#IBiddingStrategy`
+- `src/convenings/participants/bidding/advanced_bidding_factory.ts` → utilizes → All bidding strategy implementations
+
+### Key Features Implemented
+- Contextual relevance bidding: Analyzes semantic relevance to the current conversation context
+- Emotion-influenced bidding: Uses emotional states to influence bidding behavior
+- Coalition bidding: Enables participants to form temporary or persistent coalitions
+- Interruption mechanics: Provides sophisticated interruption capabilities based on urgency
+- Question responding: Prioritizes responses to relevant questions
+- Advanced factory: Provides pre-configured strategy combinations for different dialogue types
+
+### Navigation Implications
+- New bidding strategies enable more sophisticated turn-taking behavior in multi-agent dialogues
+- Specialized strategy combinations are available for different dialogue types (debate, consensus, brainstorming)
+- The factory pattern simplifies configuration of complex bidding behaviors
+
+### Follow-up Recommendations
+- Create integration tests for the new bidding strategies
+- Implement a visualization tool for monitoring bidding behavior in complex dialogues
+- Enhance emotional state detection with more sophisticated NLP approaches
+- Consider adding machine learning components for bidding parameter optimization
+- Develop specialized bidding strategies for educational dialogues
+
 ## Context Network Update: LLM-Friendly Debate Output Structure - 2025-06-01
 
 ### Information Nodes Modified
@@ -549,68 +630,4 @@ This file tracks significant updates to the context network structure and conten
 ### Navigation Implications
 - The testing improvement plan provides a clear next-action structure
 - Progress tracking table serves as the primary indicator of what to work on next
-- Related documents in elements/deno/testing.md, processes/validation.md, and decisions/ will be updated as tasks progress
-
-### Follow-up Recommendations
-- Update the progress table after completing each task or subtask
-- Create decision records for architectural decisions made during implementation
-- Consider expanding test coverage requirements for specific components based on criticality
-- Review and refine the plan after completing the first major task (dependency injection)
-
-## Context Network Update: Deno-Specific Custom Instructions - 2025-05-18
-
-### Information Nodes Modified/Created
-- Created `inbox/deno-custom-instructions-prompt.md`: Tailored version of custom instructions for Deno development projects
-
-### Content Changes
-- Updated domain terminology to reflect Deno-specific artifacts
-- Added Deno-specific directory structure recommendations
-- Included Deno-specific domain classifications (Runtime, Security, Modules, TypeScript, etc.)
-- Added Deno-specific relationship types
-- Added new sections for Deno Security Considerations and Deno Module Management
-- Enhanced Implementation Mode guidelines with Deno best practices
-
-### Navigation Implications
-- The new custom instructions provide a more tailored guide for maintaining context networks in Deno projects
-- Future Deno projects should consider using the Deno-specific instructions for better context organization
-
-### Follow-up Recommendations
-- Test the Deno-specific instructions in real-world Deno projects to validate effectiveness
-- Consider creating additional custom instruction variants for other specific technologies
-- Periodically update the Deno-specific instructions as the Deno ecosystem evolves
-
-## Context Network Update: Deno Knowledge Integration - 2025-05-18
-
-### Information Nodes Modified/Created
-- Created `elements/deno/overview.md`: High-level overview of Deno, its key features, and positioning in the JavaScript runtime ecosystem
-- Created `elements/deno/architecture.md`: Detailed explanation of Deno's technical architecture and component interactions
-- Created `elements/deno/security_model.md`: Comprehensive description of Deno's permission-based security model
-- Created `elements/deno/module_resolution.md`: Explanation of Deno's module resolution and package management approach
-- Created `elements/deno/typescript_compilation.md`: Details on how Deno handles JavaScript and TypeScript compilation
-- Created `elements/deno/testing.md`: Information on Deno's built-in testing and benchmarking capabilities
-- Created `elements/deno/best_practices.md`: Recommended patterns and practices for Deno development
-- Created `elements/deno/frameworks.md`: Overview of available frameworks and libraries in the Deno ecosystem
-- Created `elements/deno/development_workflow.md`: Guide to the complete development lifecycle for Deno applications
-
-### New Relationships Established
-- `elements/deno/overview.md` → is-parent-of → All other Deno nodes
-- `elements/deno/architecture.md` → closely-related → `elements/deno/security_model.md`
-- `elements/deno/security_model.md` → implements → `elements/deno/best_practices.md`
-- `elements/deno/module_resolution.md` → depends-on → `elements/deno/architecture.md`
-- `elements/deno/typescript_compilation.md` → relates-to → `elements/deno/testing.md`
-- `elements/deno/testing.md` → implements → `elements/deno/best_practices.md`
-- `elements/deno/frameworks.md` → complements → `elements/deno/best_practices.md`
-- `elements/deno/development_workflow.md` → incorporates → `elements/deno/testing.md`
-- `elements/deno/development_workflow.md` → implements → `elements/deno/best_practices.md`
-- `elements/deno/development_workflow.md` → utilizes → `elements/deno/frameworks.md`
-
-### Navigation Implications
-- New `elements/deno` directory serves as a dedicated knowledge area for Deno-related information
-- Navigation structure follows a logical progression from high-level overview to specific aspects of Deno
-- Cross-referencing between nodes allows for targeted exploration of related concepts
-
-### Follow-up Recommendations
-- Create process documentation for Deno development in the `processes` directory
-- Consider adding architectural decision records for Deno-specific decisions
-- Integrate the Deno knowledge into existing project documentation if Deno will be used as a technology
-- Consider expanding with real-world examples and case studies based on actual project
+- Related documents in elements/deno/testing.md, processes/validation.md, and decisions/ will be

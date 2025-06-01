@@ -287,59 +287,16 @@ export interface ILogger {
   saveToFile(data: unknown, filePath: string, format?: "json" | "md" | "txt"): Promise<void>;
 }
 
+// Import updated model pricing
+import { MODEL_PRICING as UPDATED_PRICING } from "../../mastra/model_tiers.ts";
+
 /**
  * Model pricing information
- * Prices verified with OpenRouter API documentation
+ * Imported from model_tiers.ts to ensure consistent pricing across the application
  */
 const MODEL_PRICING: Record<string, ApiCost> = {
-  // OpenAI models
-  "openai/gpt-4": { inputCostPer1K: 0.03, outputCostPer1K: 0.06 },
-  "openai/gpt-4o": { inputCostPer1K: 0.01, outputCostPer1K: 0.03 },
-  "openai/gpt-4-turbo": { inputCostPer1K: 0.01, outputCostPer1K: 0.03 },
-  "openai/gpt-4-1106-preview": { inputCostPer1K: 0.01, outputCostPer1K: 0.03 },
-  "openai/gpt-4-vision-preview": { inputCostPer1K: 0.01, outputCostPer1K: 0.03 },
-  "openai/gpt-3.5-turbo": { inputCostPer1K: 0.0005, outputCostPer1K: 0.0015 },
-  "openai/gpt-3.5-turbo-16k": { inputCostPer1K: 0.001, outputCostPer1K: 0.002 },
-  
-  // Anthropic models
-  "anthropic/claude-3-opus": { inputCostPer1K: 0.015, outputCostPer1K: 0.075 },
-  "anthropic/claude-3-sonnet": { inputCostPer1K: 0.003, outputCostPer1K: 0.015 },
-  "anthropic/claude-3-haiku": { inputCostPer1K: 0.00025, outputCostPer1K: 0.00125 },
-  "anthropic/claude-2": { inputCostPer1K: 0.008, outputCostPer1K: 0.024 },
-  "anthropic/claude-2.0": { inputCostPer1K: 0.008, outputCostPer1K: 0.024 },
-  "anthropic/claude-2.1": { inputCostPer1K: 0.008, outputCostPer1K: 0.024 },
-  "anthropic/claude-instant-1": { inputCostPer1K: 0.0008, outputCostPer1K: 0.0024 },
-  
-  // Google models
-  "google/gemini-pro": { inputCostPer1K: 0.00025, outputCostPer1K: 0.0005 },
-  "google/gemini-pro-vision": { inputCostPer1K: 0.00025, outputCostPer1K: 0.0005 },
-  "google/palm-2-chat-bison": { inputCostPer1K: 0.0005, outputCostPer1K: 0.0005 },
-  "google/palm-2-codechat-bison": { inputCostPer1K: 0.0005, outputCostPer1K: 0.0005 },
-  
-  // Mistral models
-  "mistral/mistral-7b-instruct": { inputCostPer1K: 0.0002, outputCostPer1K: 0.0002 },
-  "mistral/mistral-medium": { inputCostPer1K: 0.0027, outputCostPer1K: 0.0027 },
-  "mistral/mistral-small": { inputCostPer1K: 0.0007, outputCostPer1K: 0.0007 },
-  "mistral/mistral-large": { inputCostPer1K: 0.008, outputCostPer1K: 0.024 },
-  "mistral/mixtral-8x7b-instruct": { inputCostPer1K: 0.0006, outputCostPer1K: 0.0006 },
-  
-  // Cohere models
-  "cohere/command": { inputCostPer1K: 0.0005, outputCostPer1K: 0.0015 },
-  "cohere/command-light": { inputCostPer1K: 0.0003, outputCostPer1K: 0.0006 },
-  "cohere/command-r": { inputCostPer1K: 0.001, outputCostPer1K: 0.003 },
-  "cohere/command-r-plus": { inputCostPer1K: 0.003, outputCostPer1K: 0.015 },
-  
-  // Meta models
-  "meta/llama-2-13b-chat": { inputCostPer1K: 0.0004, outputCostPer1K: 0.0004 },
-  "meta/llama-2-70b-chat": { inputCostPer1K: 0.0008, outputCostPer1K: 0.0008 },
-  "meta/llama-3-8b-instruct": { inputCostPer1K: 0.0002, outputCostPer1K: 0.0002 },
-  "meta/llama-3-70b-instruct": { inputCostPer1K: 0.0015, outputCostPer1K: 0.0015 },
-  
-  // Other models
-  "perplexity/pplx-7b-chat": { inputCostPer1K: 0.0004, outputCostPer1K: 0.0004 },
-  "perplexity/pplx-70b-chat": { inputCostPer1K: 0.0008, outputCostPer1K: 0.0008 },
-  "perplexity/sonar-small-chat": { inputCostPer1K: 0.0002, outputCostPer1K: 0.0002 },
-  "perplexity/sonar-medium-chat": { inputCostPer1K: 0.0006, outputCostPer1K: 0.0006 },
+  // Use the updated pricing from model_tiers.ts
+  ...UPDATED_PRICING,
   
   // Default fallback pricing (if model not found)
   "default": { inputCostPer1K: 0.005, outputCostPer1K: 0.015 }

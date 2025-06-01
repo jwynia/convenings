@@ -19,6 +19,18 @@ export * from "./participants/mod.ts";
 // Export workflows
 export * from "./workflows/mod.ts";
 
+// Export model tiers
+export {
+  ModelTier,
+  MODEL_TIERS,
+  MODEL_PRICING,
+  getModelTierConfig
+} from "../mastra/model_tiers.ts";
+
+// Import OpenRouter dialogue functions
+import { createSimpleOpenRouterDialogue } from "./workflows/openrouter_dialogue_workflow.ts";
+export { createSimpleOpenRouterDialogue };
+
 // Export Mastra-OpenRouter integration
 export {
   OpenRouterClient,
@@ -42,24 +54,60 @@ export {
  * 
  * @param topic - Topic for the dialogue
  * @param openRouterApiKey - OpenRouter API key
- * @param defaultModel - Default model to use (e.g., "openai/gpt-4o")
+ * @param modelTierOrModel - Model tier or specific model to use
+ * @param temperature - Temperature setting (default: 0.7)
  * @returns Promise resolving to the dialogue result
  */
 export async function createSimpleDialogue(
   topic: string,
   openRouterApiKey: string,
-  defaultModel: string = "openai/gpt-4o"
+  modelTierOrModel: ModelTier | string = ModelTier.PREMIUM,
+  temperature: number = 0.7
 ) {
-  // Create a dialogue with default participants
-  const dialogue = await createSimpleOpenRouterDialogue(
-    topic,
-    {
-      apiKey: openRouterApiKey,
-      defaultModel,
-      temperature: 0.7,
-      fallbackModels: ["anthropic/claude-3-opus", "anthropic/claude-3-sonnet"]
+  // Import the ModelTier directly to ensure it's available
+  const { ModelTier } = await import("../mastra/model_tiers.ts");
+  
+  let modelTier: ModelTier | undefined;
+  let defaultModel: string | undefined;
+  let fallbackModels: string[] | undefined;
+  
+  // Check if model tier or specific model was provided
+  if (typeof modelTierOrModel === 'string' && Object.values(ModelTier).includes(modelTierOrModel as ModelTier)) {
+    // It's a model tier
+    modelTier = modelTierOrModel as ModelTier;
+  } else {
+    // It's a specific model
+    defaultModel = modelTierOrModel as string;
+    
+    // Set fallbacks based on the model category
+    if (defaultModel.includes('gpt-4')) {
+      fallbackModels = ["anthropic/claude-3.5-sonnet", "mistralai/mistral-large-2411"];
+    } else if (defaultModel.includes('claude')) {
+      fallbackModels = ["openai/gpt-4o", "mistralai/mistral-large-2411"];
+    } else {
+      fallbackModels = ["openai/gpt-4o-mini", "anthropic/claude-3.5-haiku"];
     }
-  );
+  }
+  
+  // Create a dialogue with default participants
+  const dialogue = modelTier 
+    ? await createSimpleOpenRouterDialogue(
+        topic,
+        {
+          apiKey: openRouterApiKey,
+          temperature
+        },
+        modelTier
+      )
+    : await createSimpleOpenRouterDialogue(
+        topic,
+        {
+          apiKey: openRouterApiKey,
+          defaultModel: defaultModel!,
+          temperature,
+          fallbackModels
+        }
+      );
   
   // Run the dialogue
   return dialogue.run();

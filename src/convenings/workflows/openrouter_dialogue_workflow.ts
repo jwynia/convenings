@@ -17,6 +17,10 @@ import {
   OpenRouterConfig,
   createOpenRouterAgent 
 } from "../../mastra/openrouter_client.ts";
+import {
+  ModelTier,
+  getModelTierConfig
+} from "../../mastra/model_tiers.ts";
 
 /**
  * Configuration for an OpenRouter dialogue participant
@@ -53,6 +57,12 @@ export interface OpenRouterDialogueWorkflowConfig extends DialogueWorkflowConfig
    * Participant configurations
    */
   participantConfigs: OpenRouterParticipantConfig[];
+  
+  /**
+   * Model tier to use
+   * If specified, overrides model settings in openRouterConfig
+   */
+  modelTier?: ModelTier;
 }
 
 /**
@@ -66,8 +76,17 @@ export async function createOpenRouterDialogueWorkflow(
   topic: string,
   config: OpenRouterDialogueWorkflowConfig
 ): Promise<DialogueWorkflow> {
-  // Create OpenRouter client
-  const client = new OpenRouterClient(config.openRouterConfig);
+  // Create OpenRouter client with model tier if specified
+  let clientConfig = config.openRouterConfig;
+  
+  if (config.modelTier) {
+    clientConfig = {
+      ...clientConfig,
+      ...getModelTierConfig(config.modelTier, clientConfig.apiKey)
+    };
+  }
+  
+  const client = new OpenRouterClient(clientConfig);
   
   // Create participants
   const participants: DialogueParticipant[] = [];
@@ -108,12 +127,14 @@ export async function createOpenRouterDialogueWorkflow(
  * 
  * @param topic - Topic for the dialogue
  * @param openRouterConfig - Configuration for OpenRouter
+ * @param modelTier - Optional model tier to use
  * @param workflowConfig - Additional workflow configuration
  * @returns New dialogue workflow with predefined participants
  */
 export async function createSimpleOpenRouterDialogue(
   topic: string,
   openRouterConfig: OpenRouterConfig,
+  modelTier?: ModelTier,
   workflowConfig?: Omit<DialogueWorkflowConfig, "exitCondition">
 ): Promise<DialogueWorkflow> {
   // Define default participants
@@ -157,6 +178,7 @@ Be passionate but fair, and focus on constructive solutions.`,
   return createOpenRouterDialogueWorkflow(topic, {
     openRouterConfig,
     participantConfigs: defaultParticipants,
+    modelTier,
     maxTurns: 10,
     ...workflowConfig,
   });
